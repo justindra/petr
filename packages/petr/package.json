@@ -21,6 +21,8 @@
     "@types/node": "^18.11.18",
     "vitest": "^0.28.3"
   },
-  "dependencies": {},
-  "peerDependencies": {}
+  "dependencies": {
+    "csv-writer": "^1.6.0",
+    "langchain": "^0.0.76"
+  }
 }
