@@ -20,9 +20,9 @@ interface ObjectCsvWriterParams {
   append?: boolean;
 }
 
-type ModelOption = { name: string; llm: BaseLanguageModel };
+export type ModelOption = { name: string; llm: BaseLanguageModel };
 
-type RunnerParams<
+export type RunnerParams<
   TInput extends Record<string, any>,
   TOutput extends Record<string, string>
 > = {
