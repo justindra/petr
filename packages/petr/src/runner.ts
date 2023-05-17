@@ -144,7 +144,6 @@ export async function runner<
 
     console.log(`Finished ${i} of ${data.length}`);
     await csvWriter.writeRecords([output]);
-    break;
   }
 
   console.log('Finished!');
