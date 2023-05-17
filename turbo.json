@@ -1,0 +1,12 @@
+{
+  "baseBranch": "main",
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist"]
+    },
+    "test": {
+      "dependsOn": ["^test", "^build"]
+    }
+  }
+}

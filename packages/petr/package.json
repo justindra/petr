@@ -1,0 +1,26 @@
+{
+  "publishConfig": {
+    "directory": "dist",
+    "access": "public"
+  },
+  "name": "petr",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./*": "./*"
+  },
+  "scripts": {
+    "test": "vitest --passWithNoTests",
+    "typecheck": "tsc -noEmit",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "vitest": "^0.28.3"
+  },
+  "dependencies": {},
+  "peerDependencies": {}
+}

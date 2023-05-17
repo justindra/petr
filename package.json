@@ -1,0 +1,23 @@
+{
+  "name": "petr",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "turbo run build",
+    "version": "./.changeset/version",
+    "release": "./.changeset/release",
+    "prepare": "husky install",
+    "prettier": "prettier --write --ignore-unknown"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.26.1",
+    "@tsconfig/node16": "^1.0.4",
+    "husky": "^8.0.3",
+    "prettier": "^2.8.8",
+    "turbo": "^1.9.7",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {}
+}

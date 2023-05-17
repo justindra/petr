@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+# Build the packages
+pnpm build
+# Copy package.json and readme into the dist
+cp packages/petr/package.json packages/petr/dist/package.json
+cp README.md packages/petr/dist/README.md
+# Remove the publish config inside of package.json
+sed -i.bak -e '2,5d' packages/petr/dist/package.json
+
+# Delete all test files
+find packages/petr/dist -type f -name "*.test.js" -delete 
+find packages/petr/dist -type f -name "*.test.d.ts" -delete 
+
+# Publish the packages
+echo "🚀  Publishing packages/petr"
+pnpm changeset publish
