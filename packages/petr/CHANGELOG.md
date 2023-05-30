@@ -1,5 +1,11 @@
 # petr
 
+## 0.0.4
+
+### Patch Changes
+
+- a1ade03: Set langchain as peer dependency
+
 ## 0.0.3
 
 ### Patch Changes
