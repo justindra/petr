@@ -19,11 +19,14 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
+    "langchain": "^0.0.85",
     "vitest": "^0.28.3"
   },
+  "peerDependencies": {
+    "langchain": "*"
+  },
   "dependencies": {
-    "csv-writer": "^1.6.0",
-    "langchain": "^0.0.76"
+    "csv-writer": "^1.6.0"
   },
   "keywords": [
     "ai",
