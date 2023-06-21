@@ -1,5 +1,11 @@
 # petr
 
+## 0.1.0
+
+### Minor Changes
+
+- 110c2c2: Added ensembler
+
 ## 0.0.4
 
 ### Patch Changes
