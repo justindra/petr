@@ -1,46 +1,35 @@
-import { createObjectCsvWriter } from 'csv-writer';
-import { BaseLanguageModel } from 'langchain/base_language';
 import { LLMChain } from 'langchain/chains';
-import { ConditionalPromptSelector } from 'langchain/prompts';
 import { CSVWriterParams, getCSVWriter } from './csv-writer.js';
 
-export type ModelOption = { name: string; llm: BaseLanguageModel };
+type ChainOption = { name: string; chain: LLMChain };
 
-export type RunnerParams<
+export type EnsembleParams<
   TInput extends Record<string, any>,
   TOutput extends Record<string, string>
 > = {
-  /** The prompt to pass into the chain */
-  prompt: ConditionalPromptSelector;
-  /**
-   * A function that loads a chain, given a language model and a conditional
-   * prompt selector.
-   */
-  loadChainFn: (
-    llm: BaseLanguageModel,
-    prompt: ConditionalPromptSelector
-  ) => Promise<LLMChain>;
   /**
    * Converter to turn the provided input into something that can be used to
    * call the chain.
    */
   inputConverter?: (data: TInput) => any;
-  models: ModelOption[];
+  chains: ChainOption[];
 } & Omit<CSVWriterParams<TInput, TOutput>, 'names' | 'outputConverter'> &
   Partial<Pick<CSVWriterParams<TInput, TOutput>, 'outputConverter'>>;
 
 /**
- * Runs a full set of classifications over a set of data given a prompt to use.
- * This will run it across 3 different models, and then combine the results into
- * a single CSV file.
+ * Runs a full set of classifications over a set of data a chain to use. This
+ * will run it across different chains, and then combine the results into a
+ * single CSV file.
+ *
+ * Unlike the runner which compares different models with different prompts,
+ * this will allow you to compare different chains altogether and therefore can
+ * be used to ensemble results from different methods.
  */
-export async function runner<
+export async function ensemble<
   TInput extends Record<string, any>,
   TOutput extends Record<string, any>
 >({
-  prompt,
   data,
-  loadChainFn,
   inputConverter = (data: TInput) => data,
   outputConverter = (inputData: TInput, outputData: Record<string, any>) =>
     ({
@@ -48,20 +37,13 @@ export async function runner<
       ...outputData,
     } as TOutput),
   csvParams,
-  models,
-}: RunnerParams<TInput, TOutput>) {
-  const chains = await Promise.all(
-    models.map(async ({ name, llm }) => ({
-      name,
-      chain: await loadChainFn(llm, prompt),
-    }))
-  );
-
+  chains,
+}: EnsembleParams<TInput, TOutput>) {
   const csvWriter = getCSVWriter({
     csvParams,
     data,
-    names: models.map((model) => model.name),
-    outputConverter: outputConverter as any,
+    names: chains.map((chain) => chain.name),
+    outputConverter,
   });
 
   const results: TOutput[] = [];

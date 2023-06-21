@@ -1,0 +1,5 @@
+---
+'petr': minor
+---
+
+Added ensembler
