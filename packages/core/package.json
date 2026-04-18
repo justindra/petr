@@ -17,8 +17,10 @@
   ],
   "scripts": {
     "build": "rm -rf dist && bun build ./src/index.ts --target=node --outdir=dist --format=esm --sourcemap=linked --packages=external && tsc -p tsconfig.build.json",
+    "bundle:ui": "rm -rf ui-dist && cp -r ../ui/dist ui-dist",
+    "prepack": "cd ../.. && bun run build",
     "typecheck": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist ui-dist"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "^4.0.96",

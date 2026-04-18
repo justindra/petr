@@ -9,6 +9,7 @@ bun.lockb
 # Build outputs
 packages/*/dist/
 packages/ui/dist/
+packages/core/ui-dist/
 *.tsbuildinfo
 packages/cli/oclif.manifest.json
 

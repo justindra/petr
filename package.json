@@ -9,7 +9,7 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "bun run --filter '@petr/core' --filter '@petr/ui' build && bun run --filter '@petr/cli' build",
+    "build": "bun run --filter '@petr/core' --filter '@petr/ui' build && bun run --filter '@petr/core' bundle:ui && bun run --filter '@petr/cli' build",
     "typecheck": "bun run --filter '*' typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -21,7 +21,7 @@
     "test:watch": "bun test --watch",
     "dev:ui": "bun run --filter '@petr/ui' dev",
     "dev:cli": "bun run --filter '@petr/cli' dev",
-    "clean": "rm -rf packages/*/dist packages/ui/dist node_modules/.cache"
+    "clean": "rm -rf packages/*/dist packages/ui/dist packages/core/ui-dist node_modules/.cache"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
