@@ -11,17 +11,22 @@ import type {
   DatasetRow,
   EvalResult,
   Logger,
+  ModelConfig,
   PromptFn,
+  ResolvedSuiteConfig,
   RowResult,
   RunContext,
   RunManifest,
-  SuiteConfig,
 } from './types';
 
 /** Arguments to {@link runSuite}. */
 export interface RunSuiteOptions {
-  /** Already-loaded suite config. Use `loadConfig` to parse from disk. */
-  config: SuiteConfig;
+  /**
+   * A variant-resolved suite config — pass the output of `resolveVariant(suite, name)`.
+   * Using `ResolvedSuiteConfig` at this boundary makes it a type error to try
+   * running an unresolved multi-variant suite against a single-shot runner.
+   */
+  config: ResolvedSuiteConfig;
   /** Directory to resolve `config.dataset` and `config.prompt` against. */
   baseDir: string;
   /** Overrides `config.concurrency`. Default: 4. */
@@ -38,7 +43,7 @@ export interface RunSuiteOptions {
    * Seam for tests: replaces {@link buildLLMContext} so no real provider calls
    * happen. Each row gets its own session via this factory.
    */
-  buildSession?: (cfg: SuiteConfig['model']) => LLMSession;
+  buildSession?: (cfg: ModelConfig) => LLMSession;
   /** Seam for tests: replaces the default dynamic import of the prompt file. */
   loadPrompt?: (path: string) => Promise<PromptFn>;
 }
@@ -80,12 +85,13 @@ export async function runSuite(opts: RunSuiteOptions): Promise<RunSuiteResult> {
   const rows = typeof limit === 'number' ? allRows.slice(0, limit) : allRows;
   const promptFn = await loadPrompt(promptPath);
 
-  const runId = generateRunId(config.name);
+  const runId = generateRunId(`${config.name}_${config.variantName}`);
   const startedAt = new Date();
   const logger = opts.logger ?? consoleLogger(runId);
 
   logger.info('starting run', {
     runId,
+    variant: config.variantName,
     rows: rows.length,
     concurrency,
     model: `${config.model.provider}:${config.model.id}`,
@@ -121,6 +127,7 @@ export async function runSuite(opts: RunSuiteOptions): Promise<RunSuiteResult> {
   const totalTokensOut = results.reduce((a, r) => a + r.tokensOut, 0);
   const manifest: RunManifest = {
     name: config.name,
+    variantName: config.variantName,
     runId,
     startedAt: startedAt.toISOString(),
     endedAt: endedAt.toISOString(),
@@ -150,10 +157,10 @@ export async function runSuite(opts: RunSuiteOptions): Promise<RunSuiteResult> {
 interface RunRowArgs {
   row: DatasetRow;
   promptFn: PromptFn;
-  config: SuiteConfig;
+  config: ResolvedSuiteConfig;
   baseDir: string;
   maxRetries: number;
-  buildSession: (cfg: SuiteConfig['model']) => LLMSession;
+  buildSession: (cfg: ModelConfig) => LLMSession;
   logger: Logger;
 }
 

@@ -6,8 +6,8 @@ const cfg: SuiteConfig = {
   name: 'demo',
   dataset: 'd.jsonl',
   prompt: 'p.ts',
-  model: { provider: 'anthropic', id: 'm' },
   evals: [],
+  variants: [{ name: 'main', model: { provider: 'anthropic', id: 'm' } }],
 };
 
 describe('generateRunId', () => {

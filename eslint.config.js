@@ -6,7 +6,13 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
-    ignores: ['**/node_modules/**', '**/dist/**', 'catalyst-ui-kit/**', 'catalyst-ui-kit.zip'],
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/ui-dist/**',
+      'catalyst-ui-kit/**',
+      'catalyst-ui-kit.zip',
+    ],
   },
   js.configs.recommended,
   {

@@ -1,12 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import type { RowResult, SuiteConfig } from '../types';
+import type { EvalConfig, RowResult } from '../types';
 import { rowResultsToCsv } from './csv';
 
-const config: SuiteConfig = {
-  name: 't',
-  dataset: 'd',
-  prompt: 'p',
-  model: { provider: 'anthropic', id: 'm' },
+const config: { evals: EvalConfig[] } = {
   evals: [
     { name: 'match', type: 'equals' },
     { name: 'within-1', type: 'withinN', n: 1 },

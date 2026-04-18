@@ -4,16 +4,29 @@ export default defineConfig({
   name: 'demo',
   dataset: './dataset.jsonl',
   prompt: './prompt.ts',
-  model: {
-    // Using GitHub Copilot's OpenAI-compatible endpoint; any Copilot-supported
-    // model works here (claude-haiku-4.5, claude-sonnet-4.6, gpt-4o, …).
-    // See https://docs.github.com/en/copilot/reference/ai-models/supported-models.
-    // Requires GITHUB_COPILOT_TOKEN in .env (a Copilot OAuth token, NOT a PAT).
-    provider: 'copilot',
-    id: 'claude-sonnet-4.6',
-    temperature: 0,
-  },
   evals: [{ name: 'label-match', type: 'equals', field: 'label' }],
+  variants: [
+    {
+      // GitHub Copilot route. Requires GITHUB_COPILOT_TOKEN (a Copilot OAuth
+      // token, not a PAT) in .env.
+      name: 'copilot',
+      model: {
+        provider: 'copilot',
+        id: 'claude-sonnet-4.6',
+        temperature: 0,
+      },
+    },
+    {
+      // AWS Bedrock route. Requires AWS_PROFILE + AWS_REGION (or raw keys)
+      // and the model enabled in your Bedrock catalog.
+      name: 'bedrock',
+      model: {
+        provider: 'bedrock',
+        id: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+        temperature: 0,
+      },
+    },
+  ],
   concurrency: 4,
   maxRetries: 3,
 });

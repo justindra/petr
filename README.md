@@ -4,7 +4,7 @@ Prompt Evaluation & Testing Runner — a CLI for running LLM prompts against dat
 
 ## Try the demo
 
-The included `examples/demo` is a sentiment-classification suite you can run against a real LLM in under a minute. It ships two configs over the same dataset and prompt so you can also try `petr compare`.
+The included `examples/demo` is a sentiment-classification suite you can run against a real LLM in under a minute. The single `petr.config.ts` declares two variants — Copilot and Bedrock — over the same dataset, prompt, and evals, so `petr run` executes both and auto-compares.
 
 ```bash
 git clone https://github.com/justindra/petr
@@ -16,15 +16,15 @@ bun run build
 cd packages/cli && bun link && cd ../..
 
 cd examples/demo
-cp .env.example .env   # fill in the creds for whichever provider(s) you want
+cp .env.example .env   # fill in the creds for whichever providers you want
 
-petr run petr.config.ts                                     # GitHub Copilot
-petr run petr.config.bedrock.ts                             # AWS Bedrock
-petr compare petr.config.ts petr.config.bedrock.ts          # side-by-side
-petr review runs/<timestamp>                                # open the UI
+petr run petr.config.ts                         # runs both variants + prints a compare summary
+petr run petr.config.ts --variant copilot       # run a single variant
+petr review runs/<timestamp>                    # open the UI on any run folder
+petr compare runs/<runA> runs/<runB>            # post-hoc compare of any two existing runs
 ```
 
-`petr run` auto-loads `.env` (and `.env.local`) from the config's directory, so credentials stay out of your shell history and out of git.
+`petr run` auto-loads `.env` (and `.env.local`) from the config's directory, so credentials stay out of your shell history and out of git. Variants share `dataset` and `evals` at the suite level — this is what makes a comparison sound: they literally can't drift.
 
 ## Monorepo layout
 

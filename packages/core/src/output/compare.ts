@@ -1,14 +1,18 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { RowResult, RunManifest, SuiteConfig } from '../types';
+import type { EvalConfig, RowResult, RunManifest } from '../types';
 import { writeCsv } from './csv';
 import { encodeRow, stringifyJson } from './csv-utils';
 import { writeHtmlReport } from './html';
 import { writeJson } from './json';
 
+/** Minimal shape buildCompareData needs from either side's config. */
+type CompareSideConfig = { name: string; evals: EvalConfig[] };
+
 /** One side of a comparison — either baseline (A) or candidate (B). */
 export interface CompareSideData {
-  config: SuiteConfig;
+  /** Only `name` (used as the column label) and `evals` (for the summary) are read. */
+  config: CompareSideConfig;
   manifest: RunManifest;
   results: RowResult[];
 }
@@ -140,6 +144,34 @@ export function compareSummaryToCsv(data: CompareData): string {
     );
   }
   return lines.join('\n') + '\n';
+}
+
+/**
+ * Formats a compare summary as a terminal-friendly block — one line per eval
+ * showing pass rates on each side and the delta (percentage points).
+ *
+ * @example
+ * ```
+ * Compare: demo-copilot vs demo-bedrock  (8 rows)
+ *   label-match   100.0% → 100.0%   (+0.0pp)
+ *   within-1       80.0% →  90.0%  (+10.0pp)
+ * ```
+ */
+export function formatCompareSummary(data: CompareData): string {
+  const header = `Compare: ${data.aLabel} vs ${data.bLabel}  (${data.rows.length} rows)`;
+  if (data.summary.length === 0) {
+    return `${header}\n  (no evals were run on both sides)`;
+  }
+  const nameWidth = Math.max(...data.summary.map((s) => s.eval.length));
+  const lines = data.summary.map((s) => {
+    const a = (s.passRateA * 100).toFixed(1).padStart(6);
+    const b = (s.passRateB * 100).toFixed(1).padStart(6);
+    const deltaPp = s.delta * 100;
+    const sign = deltaPp >= 0 ? '+' : '';
+    const delta = `(${sign}${deltaPp.toFixed(1)}pp)`;
+    return `  ${s.eval.padEnd(nameWidth)}  ${a}% → ${b}%  ${delta}`;
+  });
+  return [header, ...lines].join('\n');
 }
 
 /** Arguments to {@link writeCompareArtifacts}. */

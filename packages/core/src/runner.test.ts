@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { resolveVariant } from './config';
 import type { LLMSession } from './context';
 import { runSuite } from './runner';
 import type {
@@ -9,6 +10,7 @@ import type {
   GenerateTextResult,
   LLMContext,
   PromptFn,
+  ResolvedSuiteConfig,
   SuiteConfig,
 } from './types';
 
@@ -34,7 +36,7 @@ async function scaffoldSuite(
   rows: string[],
   promptSource: string,
 ): Promise<{
-  config: SuiteConfig;
+  config: ResolvedSuiteConfig;
   baseDir: string;
   promptFn: PromptFn;
 }> {
@@ -43,13 +45,14 @@ async function scaffoldSuite(
   await fs.writeFile(dsPath, rows.join('\n') + '\n');
   const promptPath = path.join(baseDir, 'prompt.ts');
   await fs.writeFile(promptPath, promptSource);
-  const config: SuiteConfig = {
+  const suite: SuiteConfig = {
     name: 'fixture',
     dataset: 'ds.jsonl',
     prompt: 'prompt.ts',
-    model: { provider: 'anthropic', id: 'claude-haiku-4-5' },
     evals: [{ name: 'label-match', type: 'equals', field: 'label' }],
+    variants: [{ name: 'main', model: { provider: 'anthropic', id: 'claude-haiku-4-5' } }],
   };
+  const config = resolveVariant(suite, 'main');
   const mod = (await import(path.toNamespacedPath(promptPath))) as { default: PromptFn };
   return { config, baseDir, promptFn: mod.default };
 }

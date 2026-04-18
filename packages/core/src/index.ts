@@ -1,4 +1,4 @@
-export { defineConfig, loadConfig, validateConfig } from './config';
+export { defineConfig, loadConfig, resolveVariant, validateConfig } from './config';
 export { buildLLMContext, type LLMSession } from './context';
 export { notesPathFor, readDataset, readNotes, writeNote } from './dataset';
 export { loadEnvFromDir, parseEnvFile, type LoadEnvResult } from './env';
@@ -9,6 +9,7 @@ export {
   buildCompareData,
   compareRowsToCsv,
   compareSummaryToCsv,
+  formatCompareSummary,
   writeCompareArtifacts,
   type CompareData,
   type CompareRow,

@@ -8,13 +8,20 @@ export default defineConfig({
   name: 'demo',
   dataset: './dataset.jsonl',
   prompt: './prompt.ts',
-  model: {
-    provider: 'anthropic',
-    id: 'claude-haiku-4-5',
-    temperature: 0,
-  },
   evals: [
     { name: 'label-match', type: 'equals', field: 'label' },
+  ],
+  variants: [
+    // Add more variants to compare models or prompts against each other —
+    // dataset + evals stay shared so the comparison is apples-to-apples.
+    {
+      name: 'main',
+      model: {
+        provider: 'anthropic',
+        id: 'claude-haiku-4-5',
+        temperature: 0,
+      },
+    },
   ],
   concurrency: 4,
   maxRetries: 3,

@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   loadConfig,
+  resolveVariant,
   runSuite,
   silentLogger,
   writeRunArtifacts,
@@ -49,11 +50,11 @@ export default defineConfig({
   name: 'integration',
   dataset: './dataset.jsonl',
   prompt: './prompt.ts',
-  model: { provider: 'anthropic', id: 'claude-haiku-4-5' },
   evals: [
     { name: 'label-match', type: 'equals', field: 'label' },
     { name: 'score-within-1', type: 'withinN', field: 'score', n: 1 },
   ],
+  variants: [{ name: 'main', model: { provider: 'anthropic', id: 'claude-haiku-4-5' } }],
   concurrency: 2,
 });`;
   const configPath = path.join(baseDir, 'petr.config.ts');
@@ -76,8 +77,9 @@ describe('runner integration', () => {
        };`,
     );
 
+    const resolved = resolveVariant(config, 'main');
     const result = await runSuite({
-      config,
+      config: resolved,
       baseDir,
       logger: silentLogger,
       buildSession: fakeSession({ thanks: 'positive', bad: 'negative', when: 'neutral' }),
@@ -89,7 +91,7 @@ describe('runner integration', () => {
 
     const artifactsDir = path.join(baseDir, 'runs');
     const artifacts = await writeRunArtifacts({
-      config,
+      config: resolved,
       manifest: result.manifest,
       results: result.results,
       outDir: artifactsDir,

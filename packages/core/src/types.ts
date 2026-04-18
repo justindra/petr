@@ -107,22 +107,51 @@ export type EvalConfig =
   | BooleanEvalConfig
   | CustomEvalConfig;
 
-/** The top-level config passed to {@link defineConfig}. */
+/**
+ * One execution variant within a suite. Variants are what make `petr compare`
+ * structurally sound: `dataset` and `evals` are pinned at the suite level
+ * (they literally cannot vary across variants), so a comparison between two
+ * variants is always over the same data and the same scoring.
+ */
+export interface VariantConfig {
+  /** Unique per suite. Used in run ids, compare report columns, and `--variant`. */
+  name: string;
+  model: ModelConfig;
+  /** Optional override of the suite-level prompt for this variant. */
+  prompt?: string;
+}
+
+/**
+ * The top-level config passed to {@link defineConfig}. Every suite declares
+ * at least one variant; a "single run" is simply a one-variant suite.
+ */
 export interface SuiteConfig {
   /** Human-readable suite name; used in run ids and report headers. */
   name: string;
   /** Path to a JSONL dataset, relative to the config file. */
   dataset: string;
-  /** Path to a TS/JS file exporting a {@link PromptFn} as default. */
+  /** Default prompt path for variants; each variant may override. */
   prompt: string;
-  model: ModelConfig;
   evals: EvalConfig[];
+  /** At least one variant. Multiple variants auto-compare on `petr run`. */
+  variants: VariantConfig[];
   /** Max rows in flight at once. Default: 4. */
   concurrency?: number;
   /** Retries per row on transient errors, with exponential backoff. Default: 3. */
   maxRetries?: number;
   /** Default output directory. CLI flag `--out` overrides this. */
   out?: string;
+}
+
+/**
+ * A materialized suite config with one variant's `model` and `prompt` baked
+ * in at the top level. The runner works against this shape so its internals
+ * don't need to know about variants.
+ */
+export interface ResolvedSuiteConfig extends Omit<SuiteConfig, 'variants'> {
+  /** The name of the variant this config was resolved from. */
+  variantName: string;
+  model: ModelConfig;
 }
 
 /** Minimal logger interface the runner and user prompts use. */
@@ -250,6 +279,8 @@ export interface RowResult {
  */
 export interface RunManifest {
   name: string;
+  /** Name of the variant this run used — `variantName` inside the suite config. */
+  variantName: string;
   runId: string;
   startedAt: string;
   endedAt: string;

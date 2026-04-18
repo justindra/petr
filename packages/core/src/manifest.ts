@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
-import type { SuiteConfig } from './types';
 
 /**
  * Generates a run id of the form `YYYY-MM-DDTHH-MM-SS_<safe-name>_<rand>`.
@@ -17,11 +16,11 @@ export function generateRunId(name: string, now: Date = new Date()): string {
 }
 
 /**
- * Returns a 12-character SHA-256 prefix of the serialized config — stable for
- * identical configs, changes with any field. Used in manifests to spot when
- * a run's configuration has drifted.
+ * Returns a 12-character SHA-256 prefix of a serialized object — stable for
+ * identical inputs, changes with any field. Used in manifests to spot when a
+ * run's resolved config has drifted.
  */
-export function hashConfig(config: SuiteConfig): string {
+export function hashConfig(config: object): string {
   return createHash('sha256').update(JSON.stringify(config)).digest('hex').slice(0, 12);
 }
 

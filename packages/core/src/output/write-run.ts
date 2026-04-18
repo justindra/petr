@@ -1,13 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { RowResult, RunManifest, SuiteConfig } from '../types';
+import type { EvalConfig, RowResult, RunManifest } from '../types';
 import { rowResultsToCsv, writeCsv } from './csv';
 import { writeHtmlReport } from './html';
 import { writeManifest, writeRunJson } from './json';
 
 /** Arguments to {@link writeRunArtifacts}. */
 export interface WriteRunOptions {
-  config: SuiteConfig;
+  /** Only `evals` is consumed — a ResolvedSuiteConfig or SuiteConfig both work. */
+  config: { evals: EvalConfig[] };
   manifest: RunManifest;
   results: RowResult[];
   /** Parent directory — a `<runId>/` subfolder is created inside. */

@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import type { EvalResult, RowResult, SuiteConfig } from '../types';
+import type { EvalConfig, EvalResult, RowResult } from '../types';
 import { encodeRow, stringifyJson } from './csv-utils';
 
 /**
@@ -7,7 +7,7 @@ import { encodeRow, stringifyJson } from './csv-utils';
  * columns (`eval.<name>.pass`, `.score`, `.detail`) so spreadsheet tools can
  * filter failures without parsing JSON.
  */
-export function rowResultsToCsv(config: SuiteConfig, results: RowResult[]): string {
+export function rowResultsToCsv(config: { evals: EvalConfig[] }, results: RowResult[]): string {
   const evalNames = [...new Set(config.evals.map((e) => e.name))];
   const headers = [
     'id',

@@ -1,65 +1,77 @@
 import { Args, Command, Flags } from '@oclif/core';
 import {
+  buildCompareData,
+  formatCompareSummary,
   generateRunId,
-  loadConfig,
-  loadEnvFromDir,
-  runSuite,
   writeCompareArtifacts,
-  type RunSuiteOptions,
+  type EvalConfig,
+  type RowResult,
+  type RunManifest,
 } from '@petr/core';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export default class Compare extends Command {
   static override description =
-    'Run two suites against the same dataset and emit a side-by-side comparison';
+    'Report on two existing run folders — emit side-by-side artifacts and print a pass-rate summary. Does not run anything.';
 
   static override args = {
-    a: Args.string({ description: 'First config (baseline)', required: true }),
-    b: Args.string({ description: 'Second config (candidate)', required: true }),
+    a: Args.string({ description: 'First run folder (baseline)', required: true }),
+    b: Args.string({ description: 'Second run folder (candidate)', required: true }),
   };
 
   static override flags = {
-    concurrency: Flags.integer({ char: 'c' }),
-    'max-retries': Flags.integer(),
-    limit: Flags.integer({ char: 'l' }),
-    out: Flags.string({ char: 'o', default: './compare' }),
+    out: Flags.string({
+      char: 'o',
+      description: 'Output directory for compare artifacts (default: ./compare)',
+      default: './compare',
+    }),
   };
 
   override async run(): Promise<void> {
     const { args, flags } = await this.parse(Compare);
+    const a = await loadRun(args.a);
+    const b = await loadRun(args.b);
 
-    const [loaded1, loaded2] = await Promise.all([loadConfig(args.a), loadConfig(args.b)]);
-    loadEnvFromDir(loaded1.baseDir);
-    if (loaded2.baseDir !== loaded1.baseDir) loadEnvFromDir(loaded2.baseDir);
-
-    const build = (cfg: typeof loaded1): RunSuiteOptions => ({
-      config: cfg.config,
-      baseDir: cfg.baseDir,
-      ...(flags.concurrency !== undefined ? { concurrency: flags.concurrency } : {}),
-      ...(flags['max-retries'] !== undefined ? { maxRetries: flags['max-retries'] } : {}),
-      ...(flags.limit !== undefined ? { limit: flags.limit } : {}),
-    });
-
-    this.log(
-      `▸ A: ${loaded1.config.name} — ${loaded1.config.model.provider}:${loaded1.config.model.id}`,
-    );
-    this.log(
-      `▸ B: ${loaded2.config.name} — ${loaded2.config.model.provider}:${loaded2.config.model.id}`,
-    );
-
-    const [a, b] = await Promise.all([runSuite(build(loaded1)), runSuite(build(loaded2))]);
-
+    const data = buildCompareData(a, b);
     const outDir = path.resolve(flags.out);
-    const artifacts = await writeCompareArtifacts({
-      a: { config: loaded1.config, manifest: a.manifest, results: a.results },
-      b: { config: loaded2.config, manifest: b.manifest, results: b.results },
-      outDir,
-      compareId: generateRunId(`${loaded1.config.name}-vs-${loaded2.config.name}`),
-    });
-
-    this.log(
-      `A: ${a.manifest.passCount}/${a.manifest.rowCount} passed  ·  B: ${b.manifest.passCount}/${b.manifest.rowCount} passed`,
+    const compareId = generateRunId(
+      `${a.config.name}_${a.manifest.variantName}-vs-${b.manifest.variantName}`,
     );
+    const artifacts = await writeCompareArtifacts({ a, b, outDir, compareId });
+
+    this.log(formatCompareSummary(data));
     this.log(`→ ${artifacts.compareDir}`);
   }
+}
+
+interface LoadedRun {
+  config: { name: string; evals: EvalConfig[] };
+  manifest: RunManifest;
+  results: RowResult[];
+}
+
+async function loadRun(runDir: string): Promise<LoadedRun> {
+  const absDir = path.resolve(runDir);
+  const resultsPath = path.join(absDir, 'results.json');
+  let raw: string;
+  try {
+    raw = await fs.readFile(resultsPath, 'utf8');
+  } catch (err) {
+    throw new Error(`Could not read ${resultsPath} — is "${runDir}" a petr run folder?`, {
+      cause: err,
+    });
+  }
+  const parsed = JSON.parse(raw) as { manifest: RunManifest; results: RowResult[] };
+  // Synthesize the minimal config shape buildCompareData needs from the results.
+  // Each row carries its own eval names, so we don't need the original eval
+  // config — type is set to `equals` as a placeholder; only `name` is read.
+  const evalNames = [...new Set(parsed.results.flatMap((r) => r.evals.map((e) => e.name)))];
+  const evals: EvalConfig[] = evalNames.map((name) => ({ name, type: 'equals' }));
+  const label = `${parsed.manifest.name}/${parsed.manifest.variantName}`;
+  return {
+    config: { name: label, evals },
+    manifest: parsed.manifest,
+    results: parsed.results,
+  };
 }
