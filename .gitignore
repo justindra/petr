@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.local
+bun.lockb
+
+# Build outputs
+packages/*/dist/
+packages/ui/dist/
+*.tsbuildinfo
+packages/cli/oclif.manifest.json
+
+# Run artifacts
+runs/
+compare/
+
+# IDE
+.vscode/
+.idea/
