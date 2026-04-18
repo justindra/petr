@@ -7,13 +7,20 @@ interface Output {
   label: 'positive' | 'negative' | 'neutral';
 }
 
-// Non-LLM demo prompt — classifies deterministically so the example runs
-// without API credentials. Replace the body with a `ctx.llm.generateText` call
-// in a real project.
-const run: PromptFn<Input, Output> = async (input) => {
-  const msg = input.message.toLowerCase();
-  if (msg.includes('thanks') || msg.includes('worked')) return { label: 'positive' };
-  if (msg.includes('crash') || msg.includes('useless')) return { label: 'negative' };
+const SYSTEM = `You classify customer messages by sentiment.
+Reply with exactly one word: positive, negative, or neutral.
+No punctuation, no explanation, no surrounding text.`;
+
+const run: PromptFn<Input, Output> = async (input, ctx) => {
+  const { text } = await ctx.llm.generateText({
+    system: SYSTEM,
+    prompt: input.message,
+  });
+  const normalized = text.trim().toLowerCase().replace(/[.!?"'`]/g, '');
+  if (normalized === 'positive' || normalized === 'negative' || normalized === 'neutral') {
+    return { label: normalized };
+  }
+  // Fallback when the model returns something unexpected; the eval will flag it.
   return { label: 'neutral' };
 };
 

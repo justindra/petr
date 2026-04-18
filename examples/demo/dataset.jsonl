@@ -1,3 +1,8 @@
-{"id":"r1","input":{"message":"thanks, that worked!"},"expected":{"label":"positive"}}
+{"id":"r1","input":{"message":"thanks, that worked perfectly!"},"expected":{"label":"positive"}}
 {"id":"r2","input":{"message":"it crashed again, useless."},"expected":{"label":"negative"}}
 {"id":"r3","input":{"message":"meeting tomorrow at 3?"},"expected":{"label":"neutral"}}
+{"id":"r4","input":{"message":"absolutely love this, best thing I've tried"},"expected":{"label":"positive"}}
+{"id":"r5","input":{"message":"the output is incorrect and the docs are wrong"},"expected":{"label":"negative"}}
+{"id":"r6","input":{"message":"can you confirm the spec for the API endpoint?"},"expected":{"label":"neutral"}}
+{"id":"r7","input":{"message":"amazing feature, saved me hours of work"},"expected":{"label":"positive"}}
+{"id":"r8","input":{"message":"this broke our entire pipeline, huge regression"},"expected":{"label":"negative"}}
