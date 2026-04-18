@@ -1,5 +1,5 @@
 import { Args, Command, Flags } from '@oclif/core';
-import { loadConfig, runSuite, writeRunArtifacts } from '@petr/core';
+import { loadConfig, loadEnvFromDir, runSuite, writeRunArtifacts } from '@petr/core';
 import path from 'node:path';
 
 export default class Run extends Command {
@@ -35,6 +35,8 @@ export default class Run extends Command {
   override async run(): Promise<void> {
     const { args, flags } = await this.parse(Run);
     const { config, baseDir } = await loadConfig(args.config);
+    const env = loadEnvFromDir(baseDir);
+    for (const f of env.loaded) this.log(`• loaded env from ${path.relative(baseDir, f) || f}`);
 
     const opts = {
       config,

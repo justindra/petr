@@ -2,6 +2,7 @@ import { Args, Command, Flags } from '@oclif/core';
 import {
   generateRunId,
   loadConfig,
+  loadEnvFromDir,
   runSuite,
   writeCompareArtifacts,
   type RunSuiteOptions,
@@ -28,6 +29,8 @@ export default class Compare extends Command {
     const { args, flags } = await this.parse(Compare);
 
     const [loaded1, loaded2] = await Promise.all([loadConfig(args.a), loadConfig(args.b)]);
+    loadEnvFromDir(loaded1.baseDir);
+    if (loaded2.baseDir !== loaded1.baseDir) loadEnvFromDir(loaded2.baseDir);
 
     const build = (cfg: typeof loaded1): RunSuiteOptions => ({
       config: cfg.config,

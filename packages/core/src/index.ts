@@ -1,6 +1,7 @@
 export { defineConfig, loadConfig, resolveRelativeToConfig, validateConfig } from './config.js';
 export { buildLLMContext, type LLMSession } from './context.js';
 export { notesPathFor, readDataset, readNotes, writeNote } from './dataset.js';
+export { loadEnvFromDir, parseEnvFile, type LoadEnvResult } from './env.js';
 export { runEvals, type RunEvalsDeps } from './evals/index.js';
 export { consoleLogger, silentLogger } from './logger.js';
 export { generateRunId, hashConfig, tryGitSha } from './manifest.js';
