@@ -1,0 +1,244 @@
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { resolveRelativeToConfig } from './config.js';
+import { buildLLMContext, type LLMSession } from './context.js';
+import { readDataset } from './dataset.js';
+import { runEvals } from './evals/index.js';
+import { consoleLogger } from './logger.js';
+import { generateRunId, hashConfig, tryGitSha } from './manifest.js';
+import { estimateCostUsd } from './providers/pricing.js';
+import type {
+  DatasetRow,
+  EvalResult,
+  Logger,
+  PromptFn,
+  RowResult,
+  RunContext,
+  RunManifest,
+  SuiteConfig,
+} from './types.js';
+
+export interface RunSuiteOptions {
+  config: SuiteConfig;
+  baseDir: string;
+  concurrency?: number;
+  maxRetries?: number;
+  limit?: number;
+  logger?: Logger;
+  onRow?: (row: RowResult, totalRows: number) => void;
+  buildSession?: (cfg: SuiteConfig['model']) => LLMSession;
+  loadPrompt?: (path: string) => Promise<PromptFn>;
+}
+
+export interface RunSuiteResult {
+  manifest: RunManifest;
+  results: RowResult[];
+}
+
+const DEFAULT_CONCURRENCY = 4;
+const DEFAULT_MAX_RETRIES = 3;
+
+export async function runSuite(opts: RunSuiteOptions): Promise<RunSuiteResult> {
+  const {
+    config,
+    baseDir,
+    concurrency = config.concurrency ?? DEFAULT_CONCURRENCY,
+    maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES,
+    limit,
+    buildSession = buildLLMContext,
+    loadPrompt = defaultLoadPrompt,
+  } = opts;
+
+  const datasetPath = resolveRelativeToConfig(baseDir, config.dataset);
+  const promptPath = resolveRelativeToConfig(baseDir, config.prompt);
+
+  const allRows = await readDataset(datasetPath);
+  const rows = typeof limit === 'number' ? allRows.slice(0, limit) : allRows;
+  const promptFn = await loadPrompt(promptPath);
+
+  const runId = generateRunId(config.name);
+  const startedAt = new Date();
+  const logger = opts.logger ?? consoleLogger(runId);
+
+  logger.info('starting run', {
+    runId,
+    rows: rows.length,
+    concurrency,
+    model: `${config.model.provider}:${config.model.id}`,
+  });
+
+  const indexById = new Map(rows.map((r, i) => [r.id, i]));
+  const results: RowResult[] = new Array(rows.length) as RowResult[];
+
+  await runWithConcurrency(rows, concurrency, async (row) => {
+    const rowLogger = childLogger(logger, `row:${row.id}`);
+    const result = await runRow({
+      row,
+      promptFn,
+      config,
+      baseDir,
+      maxRetries,
+      buildSession,
+      logger: rowLogger,
+    });
+    const idx = indexById.get(row.id) ?? 0;
+    results[idx] = result;
+    opts.onRow?.(result, rows.length);
+    rowLogger.info('row done', {
+      pass: result.pass,
+      latencyMs: result.latencyMs,
+      tokensIn: result.tokensIn,
+      tokensOut: result.tokensOut,
+    });
+  });
+
+  const endedAt = new Date();
+  const totalTokensIn = results.reduce((a, r) => a + r.tokensIn, 0);
+  const totalTokensOut = results.reduce((a, r) => a + r.tokensOut, 0);
+  const manifest: RunManifest = {
+    name: config.name,
+    runId,
+    startedAt: startedAt.toISOString(),
+    endedAt: endedAt.toISOString(),
+    configHash: hashConfig(config),
+    gitSha: tryGitSha(baseDir),
+    model: config.model,
+    datasetPath: path.relative(baseDir, datasetPath) || datasetPath,
+    promptPath: path.relative(baseDir, promptPath) || promptPath,
+    rowCount: results.length,
+    passCount: results.filter((r) => r.pass).length,
+    totalTokensIn,
+    totalTokensOut,
+    estimatedCostUsd: estimateCostUsd(config.model, totalTokensIn, totalTokensOut),
+  };
+
+  logger.info('run complete', {
+    runId,
+    passed: manifest.passCount,
+    total: manifest.rowCount,
+    tokensIn: manifest.totalTokensIn,
+    tokensOut: manifest.totalTokensOut,
+  });
+
+  return { manifest, results };
+}
+
+interface RunRowArgs {
+  row: DatasetRow;
+  promptFn: PromptFn;
+  config: SuiteConfig;
+  baseDir: string;
+  maxRetries: number;
+  buildSession: (cfg: SuiteConfig['model']) => LLMSession;
+  logger: Logger;
+}
+
+async function runRow(args: RunRowArgs): Promise<RowResult> {
+  const { row, promptFn, config, baseDir, maxRetries, buildSession, logger } = args;
+  const session = buildSession(config.model);
+  const ctx: RunContext = { llm: session.llm, row, logger };
+
+  const startedAt = Date.now();
+  let output: unknown = null;
+  let error: string | null = null;
+  try {
+    output = await retry(() => promptFn(row.input, ctx), maxRetries, logger);
+  } catch (err) {
+    error = (err as Error).message ?? String(err);
+    logger.error('prompt failed', { error });
+  }
+
+  const latencyMs = Date.now() - startedAt;
+  const usage = session.getUsage();
+  const transcript = session.getTranscript();
+
+  let evalResults: EvalResult[] = [];
+  if (error === null) {
+    try {
+      evalResults = await runEvals(config.evals, output, row, {
+        llm: session.llm,
+        logger,
+        baseDir,
+      });
+    } catch (err) {
+      error = `eval error: ${(err as Error).message}`;
+      logger.error('eval failed', { error });
+    }
+  }
+
+  return {
+    id: row.id,
+    input: row.input,
+    expected: row.expected ?? null,
+    output,
+    error,
+    evals: evalResults,
+    pass: error === null && evalResults.length > 0 && evalResults.every((e) => e.pass),
+    latencyMs,
+    tokensIn: usage.inputTokens,
+    tokensOut: usage.outputTokens,
+    transcript,
+  };
+}
+
+async function retry<T>(fn: () => Promise<T>, maxRetries: number, logger: Logger): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt >= maxRetries) break;
+      const delay = Math.min(30_000, 250 * Math.pow(2, attempt));
+      logger.warn('retrying', {
+        attempt: attempt + 1,
+        delayMs: delay,
+        error: (err as Error).message,
+      });
+      await sleep(delay);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+}
+
+async function runWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  const concurrency = Math.max(1, limit);
+  let cursor = 0;
+  const runners = Array.from({ length: concurrency }, async () => {
+    while (true) {
+      const idx = cursor++;
+      if (idx >= items.length) return;
+      const item = items[idx];
+      if (item === undefined) return;
+      await worker(item);
+    }
+  });
+  await Promise.all(runners);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function defaultLoadPrompt(promptPath: string): Promise<PromptFn> {
+  const url = pathToFileURL(promptPath).href;
+  const mod = (await import(url)) as { default?: PromptFn };
+  if (typeof mod.default !== 'function') {
+    throw new Error(`Prompt file at ${promptPath} must have a default export`);
+  }
+  return mod.default;
+}
+
+function childLogger(parent: Logger, tag: string): Logger {
+  const prefix = `[${tag}] `;
+  return {
+    info: (msg, meta) => parent.info(`${prefix}${msg}`, meta),
+    warn: (msg, meta) => parent.warn(`${prefix}${msg}`, meta),
+    error: (msg, meta) => parent.error(`${prefix}${msg}`, meta),
+    debug: (msg, meta) => parent.debug(`${prefix}${msg}`, meta),
+  };
+}

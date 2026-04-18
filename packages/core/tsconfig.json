@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": ["bun"],
+    "lib": ["ES2022"],
+    "composite": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.test.ts", "dist", "test"]
+}
