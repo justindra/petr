@@ -1,9 +1,9 @@
-import { bedrock } from '@ai-sdk/amazon-bedrock';
 import { anthropic } from '@ai-sdk/anthropic';
 import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 import type { ModelConfig } from '../types';
+import { createBedrockModel } from './bedrock';
 import { createCopilotModel } from './copilot';
 
 /**
@@ -19,7 +19,7 @@ export function resolveModel(cfg: ModelConfig): LanguageModel {
     case 'anthropic':
       return anthropic(cfg.id);
     case 'bedrock':
-      return bedrock(cfg.id);
+      return createBedrockModel(cfg.id);
     case 'openai':
       return openai(cfg.id);
     case 'google':

@@ -27,6 +27,7 @@
     "@ai-sdk/anthropic": "^3.0.71",
     "@ai-sdk/google": "^3.0.0",
     "@ai-sdk/openai": "^3.0.0",
+    "@aws-sdk/credential-providers": "^3.1032.0",
     "ai": "^6.0.0"
   }
 }
