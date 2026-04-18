@@ -17,7 +17,11 @@ export async function writeRunJson(filePath: string, payload: RunJsonPayload): P
   await writeJson(filePath, payload);
 }
 
-/** Writes just the run manifest — a smaller file for listings and tooling. */
-export async function writeManifest(filePath: string, manifest: RunManifest): Promise<void> {
+/**
+ * Writes a manifest object — the per-variant {@link RunManifest} or the
+ * suite-level {@link import('../types').SuiteRunManifest}, whichever one
+ * matches the folder level.
+ */
+export async function writeManifest(filePath: string, manifest: object): Promise<void> {
   await writeJson(filePath, manifest);
 }

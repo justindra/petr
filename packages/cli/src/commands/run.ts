@@ -7,17 +7,21 @@ import {
   loadEnvFromDir,
   resolveVariant,
   runSuite,
+  tryGitSha,
   writeCompareArtifacts,
-  writeRunArtifacts,
+  writeSuiteRunManifest,
+  writeVariantArtifacts,
+  type CompareSide,
   type RowResult,
   type RunManifest,
   type SuiteConfig,
+  type SuiteRunManifest,
 } from '@petr/core';
 import path from 'node:path';
 
 export default class Run extends Command {
   static override description =
-    'Run a suite: execute every variant against the dataset and score with evals. Auto-compares on 2 variants.';
+    'Run a suite: execute every variant against the dataset and score with evals. Auto-compares when 2+ variants run.';
 
   static override args = {
     config: Args.string({
@@ -44,12 +48,8 @@ export default class Run extends Command {
     }),
     out: Flags.string({
       char: 'o',
-      description: 'Output directory (default: ./runs)',
+      description: 'Parent directory for run folders (default: ./runs)',
       default: './runs',
-    }),
-    'compare-out': Flags.string({
-      description: 'Output directory for compare artifacts (default: ./compare)',
-      default: './compare',
     }),
   };
 
@@ -61,15 +61,18 @@ export default class Run extends Command {
 
     const targets = pickVariants(config, flags.variant);
     const outDir = path.resolve(flags.out);
+    const suiteRunId = generateRunId(config.name);
+    const suiteRunDir = path.join(outDir, suiteRunId);
+    const startedAt = new Date();
 
-    const completed: Array<{ config: SuiteConfig; manifest: RunManifest; results: RowResult[] }> =
-      [];
+    this.log(`▸ ${config.name}  →  ${path.relative(process.cwd(), suiteRunDir) || suiteRunDir}`);
+
+    const completed: Array<{ manifest: RunManifest; results: RowResult[] }> = [];
+    const variantSummaries: SuiteRunManifest['variants'] = [];
 
     for (const variantName of targets) {
       const resolved = resolveVariant(config, variantName);
-      this.log(
-        `▸ ${config.name} · ${variantName} — ${resolved.model.provider}:${resolved.model.id}`,
-      );
+      this.log(`  · ${variantName} — ${resolved.model.provider}:${resolved.model.id}`);
 
       const result = await runSuite({
         config: resolved,
@@ -79,57 +82,57 @@ export default class Run extends Command {
         ...(flags.limit !== undefined ? { limit: flags.limit } : {}),
       });
 
-      const artifacts = await writeRunArtifacts({
+      const variantDir = path.join(suiteRunDir, variantName);
+      await writeVariantArtifacts({
         config: resolved,
         manifest: result.manifest,
         results: result.results,
-        outDir,
+        variantDir,
       });
 
       const { manifest } = result;
       const costBit =
         manifest.estimatedCostUsd !== null ? ` · ~$${manifest.estimatedCostUsd.toFixed(4)}` : '';
       this.log(
-        `✓ ${manifest.passCount}/${manifest.rowCount} passed · tokens ${manifest.totalTokensIn}→${manifest.totalTokensOut}${costBit}`,
+        `    ${manifest.passCount}/${manifest.rowCount} passed · tokens ${manifest.totalTokensIn}→${manifest.totalTokensOut}${costBit}`,
       );
-      this.log(`→ ${artifacts.runDir}`);
 
-      completed.push({ config, manifest: result.manifest, results: result.results });
+      completed.push({ manifest, results: result.results });
+      variantSummaries.push({
+        name: variantName,
+        dir: variantName,
+        passCount: manifest.passCount,
+        rowCount: manifest.rowCount,
+      });
     }
 
-    if (completed.length === 2) {
-      const [a, b] = completed as [(typeof completed)[number], (typeof completed)[number]];
-      const compareOutDir = path.resolve(flags['compare-out']);
-      const compareId = generateRunId(
-        `${config.name}_${a.manifest.variantName}-vs-${b.manifest.variantName}`,
-      );
-      // Label each side with `<suite>/<variant>` so the summary distinguishes
-      // the two columns — `config.name` alone is the shared suite name.
-      const sideA = {
-        config: { name: `${config.name}/${a.manifest.variantName}`, evals: config.evals },
-        manifest: a.manifest,
-        results: a.results,
-      };
-      const sideB = {
-        config: { name: `${config.name}/${b.manifest.variantName}`, evals: config.evals },
-        manifest: b.manifest,
-        results: b.results,
-      };
-      const artifacts = await writeCompareArtifacts({
-        a: sideA,
-        b: sideB,
-        outDir: compareOutDir,
-        compareId,
-      });
-      const data = buildCompareData(sideA, sideB);
+    const endedAt = new Date();
+    const suiteManifest: SuiteRunManifest = {
+      suiteName: config.name,
+      suiteRunId,
+      startedAt: startedAt.toISOString(),
+      endedAt: endedAt.toISOString(),
+      gitSha: tryGitSha(baseDir),
+      baseDir,
+      variants: variantSummaries,
+    };
+    await writeSuiteRunManifest({ suiteRunDir, manifest: suiteManifest });
+
+    if (completed.length >= 2) {
+      const sides: CompareSide[] = completed.map((c) => ({
+        label: c.manifest.variantName,
+        evals: config.evals,
+        manifest: c.manifest,
+        results: c.results,
+      }));
+      const compareDir = path.join(suiteRunDir, 'compare');
+      const { compareDir: writtenTo } = await writeCompareArtifacts({ sides, compareDir });
+      const data = buildCompareData(sides);
       this.log('');
       this.log(formatCompareSummary(data));
-      this.log(`→ ${artifacts.compareDir}`);
-    } else if (completed.length > 2) {
-      this.log('');
-      this.log(
-        `(${completed.length} variants ran; auto-compare is pairwise — use \`petr compare <runA> <runB>\` on any pair)`,
-      );
+      this.log(`→ ${writtenTo}`);
+    } else {
+      this.log(`→ ${suiteRunDir}`);
     }
   }
 }

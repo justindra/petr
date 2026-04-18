@@ -13,7 +13,7 @@ export {
   writeCompareArtifacts,
   type CompareData,
   type CompareRow,
-  type CompareSideData,
+  type CompareSide,
   type CompareSummaryRow,
   type WriteCompareOptions,
   type WriteCompareResult,
@@ -26,7 +26,13 @@ export {
   type ReviewServerHandle,
   type StartReviewServerOptions,
 } from './output/server';
-export { writeRunArtifacts, type WriteRunOptions, type WriteRunResult } from './output/write-run';
+export {
+  writeSuiteRunManifest,
+  writeVariantArtifacts,
+  type WriteSuiteRunManifestOptions,
+  type WriteVariantOptions,
+  type WriteVariantResult,
+} from './output/write-run';
 export { resolveModel } from './providers';
 export { estimateCostUsd, type Pricing } from './providers/pricing';
 export { runSuite, type RunSuiteOptions, type RunSuiteResult } from './runner';

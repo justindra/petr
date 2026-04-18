@@ -1,5 +1,8 @@
 node_modules
 dist
+ui-dist
 bun.lockb
 catalyst-ui-kit.zip
 *.csv
+**/runs/
+**/compare/

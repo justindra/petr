@@ -51,7 +51,7 @@ export default defineConfig({
 }
 
 describe('petr run e2e', () => {
-  test('single-variant config produces one run folder', async () => {
+  test('single-variant config produces a suite run folder with one variant inside', async () => {
     const dir = await writeFixture(
       `[{ name: 'main', model: { provider: 'anthropic', id: 'claude-haiku-4-5' } }]`,
     );
@@ -63,16 +63,22 @@ describe('petr run e2e', () => {
     expect(code).toBe(0);
     expect(stdout).toContain('2/2 passed');
 
-    const entries = await fs.readdir(path.join(dir, 'runs'));
-    expect(entries).toHaveLength(1);
-    expect(entries[0]).toContain('main');
-    const files = await fs.readdir(path.join(dir, 'runs', entries[0]!));
-    expect(files).toEqual(
+    const suiteRuns = await fs.readdir(path.join(dir, 'runs'));
+    expect(suiteRuns).toHaveLength(1);
+    const suiteRunDir = path.join(dir, 'runs', suiteRuns[0]!);
+
+    const suiteContents = await fs.readdir(suiteRunDir);
+    expect(suiteContents).toContain('main');
+    expect(suiteContents).toContain('manifest.json');
+    expect(suiteContents).not.toContain('compare'); // only one variant
+
+    const variantFiles = await fs.readdir(path.join(suiteRunDir, 'main'));
+    expect(variantFiles).toEqual(
       expect.arrayContaining(['results.csv', 'results.json', 'manifest.json', 'report.html']),
     );
   }, 30_000);
 
-  test('two-variant config produces two run folders plus a compare folder', async () => {
+  test('two-variant config nests both variants plus a compare folder', async () => {
     const dir = await writeFixture(
       `[
         { name: 'alpha', model: { provider: 'anthropic', id: 'a' } },
@@ -80,28 +86,49 @@ describe('petr run e2e', () => {
       ]`,
     );
     const { code, stdout, stderr } = await runCli(
-      ['run', 'petr.config.ts', '--out', './runs', '--compare-out', './compare'],
+      ['run', 'petr.config.ts', '--out', './runs'],
       dir,
     );
     expect(stderr).toBe('');
     expect(code).toBe(0);
-    expect(stdout).toContain('Compare: e2e/alpha vs e2e/beta');
+    expect(stdout).toContain('Compare: 2 variants');
+    expect(stdout).toContain('alpha → beta');
     expect(stdout).toContain('y-match');
 
-    const runs = await fs.readdir(path.join(dir, 'runs'));
-    expect(runs).toHaveLength(2);
-    expect(runs.some((r) => r.includes('alpha'))).toBe(true);
-    expect(runs.some((r) => r.includes('beta'))).toBe(true);
+    const suiteRuns = await fs.readdir(path.join(dir, 'runs'));
+    expect(suiteRuns).toHaveLength(1);
+    const suiteRunDir = path.join(dir, 'runs', suiteRuns[0]!);
+    const suiteContents = await fs.readdir(suiteRunDir);
+    expect(suiteContents).toEqual(
+      expect.arrayContaining(['alpha', 'beta', 'compare', 'manifest.json']),
+    );
 
-    const compares = await fs.readdir(path.join(dir, 'compare'));
-    expect(compares).toHaveLength(1);
-    const compareFiles = await fs.readdir(path.join(dir, 'compare', compares[0]!));
+    const compareFiles = await fs.readdir(path.join(suiteRunDir, 'compare'));
     expect(compareFiles).toEqual(
       expect.arrayContaining(['results.csv', 'summary.csv', 'results.json', 'report.html']),
     );
   }, 30_000);
 
-  test('--variant flag filters to one variant', async () => {
+  test('three-variant config auto-compares with N-way layout', async () => {
+    const dir = await writeFixture(
+      `[
+        { name: 'a', model: { provider: 'anthropic', id: 'a' } },
+        { name: 'b', model: { provider: 'openai',    id: 'b' } },
+        { name: 'c', model: { provider: 'google',    id: 'c' } },
+      ]`,
+    );
+    const { code, stdout } = await runCli(['run', 'petr.config.ts', '--out', './runs'], dir);
+    expect(code).toBe(0);
+    expect(stdout).toContain('Compare: 3 variants');
+    expect(stdout).not.toContain('pp)'); // N-way layout has no delta column
+
+    const suiteRuns = await fs.readdir(path.join(dir, 'runs'));
+    const suiteRunDir = path.join(dir, 'runs', suiteRuns[0]!);
+    const suiteContents = await fs.readdir(suiteRunDir);
+    expect(suiteContents).toEqual(expect.arrayContaining(['a', 'b', 'c', 'compare']));
+  }, 45_000);
+
+  test('--variant flag filters to one variant (still writes a suite folder)', async () => {
     const dir = await writeFixture(
       `[
         { name: 'alpha', model: { provider: 'anthropic', id: 'a' } },
@@ -113,8 +140,13 @@ describe('petr run e2e', () => {
       dir,
     );
     expect(code).toBe(0);
-    const runs = await fs.readdir(path.join(dir, 'runs'));
-    expect(runs).toHaveLength(1);
-    expect(runs[0]).toContain('alpha');
+
+    const suiteRuns = await fs.readdir(path.join(dir, 'runs'));
+    expect(suiteRuns).toHaveLength(1);
+    const suiteRunDir = path.join(dir, 'runs', suiteRuns[0]!);
+    const suiteContents = await fs.readdir(suiteRunDir);
+    expect(suiteContents).toContain('alpha');
+    expect(suiteContents).not.toContain('beta');
+    expect(suiteContents).not.toContain('compare');
   }, 30_000);
 });

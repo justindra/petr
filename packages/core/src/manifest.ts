@@ -1,18 +1,20 @@
 import { execFileSync } from 'node:child_process';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 /**
- * Generates a run id of the form `YYYY-MM-DDTHH-MM-SS_<safe-name>_<rand>`.
+ * Generates a run id of the form `<safe-name>-YYYY-MM-DDTHH-MM-SS`.
  *
- * The timestamp is truncated to seconds and the random suffix keeps concurrent
- * runs from colliding. `name` is sanitized so it's safe to use as a directory
- * name on every OS. `now` is a seam for tests.
+ * The timestamp is truncated to seconds. `name` is sanitized so the id is
+ * safe to use as a directory name on every OS. `now` is a seam for tests.
  */
 export function generateRunId(name: string, now: Date = new Date()): string {
   const iso = now.toISOString().slice(0, 19).replace(/[:.]/g, '-');
-  const rand = randomBytes(3).toString('hex');
-  const safeName = name.replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 40) || 'run';
-  return `${iso}_${safeName}_${rand}`;
+  const safeName =
+    name
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .slice(0, 40)
+      .replace(/^-+|-+$/g, '') || 'run';
+  return `${safeName}-${iso}`;
 }
 
 /**

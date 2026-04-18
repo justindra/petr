@@ -99,24 +99,19 @@ export async function saveNote(rowId: string, text: string, tags: string[]): Pro
 }
 
 export interface CompareData {
-  aLabel: string;
-  bLabel: string;
-  manifestA: RunManifest;
-  manifestB: RunManifest;
+  /** Variant labels in display order — also the keys into every row's per-variant map. */
+  variants: string[];
+  manifests: Record<string, RunManifest>;
   rows: Array<{
     id: string;
     input: unknown;
     expected: unknown;
-    outputA: unknown;
-    outputB: unknown;
-    passA: boolean;
-    passB: boolean;
-    errorA: string | null;
-    errorB: string | null;
-    evalsA: EvalResult[];
-    evalsB: EvalResult[];
+    outputs: Record<string, unknown>;
+    passes: Record<string, boolean>;
+    errors: Record<string, string | null>;
+    evalResults: Record<string, EvalResult[]>;
   }>;
-  summary: Array<{ eval: string; passRateA: number; passRateB: number; delta: number }>;
+  summary: Array<{ eval: string; passRates: Record<string, number> }>;
 }
 
 export async function fetchCompare(): Promise<CompareData> {

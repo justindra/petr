@@ -18,10 +18,24 @@ cd packages/cli && bun link && cd ../..
 cd examples/demo
 cp .env.example .env   # fill in the creds for whichever providers you want
 
-petr run petr.config.ts                         # runs both variants + prints a compare summary
+petr run petr.config.ts                         # runs every variant + prints a compare summary
 petr run petr.config.ts --variant copilot       # run a single variant
-petr review runs/<timestamp>                    # open the UI on any run folder
-petr compare runs/<runA> runs/<runB>            # post-hoc compare of any two existing runs
+petr review runs/<suite-run>/<variant>          # open the UI on one variant's results
+petr compare runs/<suite-run>                   # re-emit the compare report for a past run
+```
+
+Each `petr run` produces one timestamped suite folder that holds every variant and the compare report:
+
+```
+runs/
+  demo-2026-04-18T17-41-13/       ← <suite-name>-<iso-timestamp>
+    manifest.json                 ← suite-level (variants, times, git sha)
+    copilot/                      ← per-variant run
+      manifest.json  results.csv  results.json  report.html
+    bedrock/
+      manifest.json  results.csv  results.json  report.html
+    compare/                      ← only written when ≥ 2 variants ran
+      results.csv  summary.csv  results.json  report.html
 ```
 
 `petr run` auto-loads `.env` (and `.env.local`) from the config's directory, so credentials stay out of your shell history and out of git. Variants share `dataset` and `evals` at the suite level — this is what makes a comparison sound: they literally can't drift.

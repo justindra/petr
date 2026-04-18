@@ -1,10 +1,10 @@
 import { Command, Flags } from '@oclif/core';
-import type { RunManifest } from '@petr/core';
+import type { SuiteRunManifest } from '@petr/core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
 export default class List extends Command {
-  static override description = 'List past runs in a directory (default: ./runs)';
+  static override description = 'List past suite runs in a directory (default: ./runs)';
 
   static override flags = {
     dir: Flags.string({ char: 'd', default: './runs' }),
@@ -21,14 +21,15 @@ export default class List extends Command {
       return;
     }
 
-    const rows: Array<{ id: string; manifest: RunManifest }> = [];
+    const rows: Array<{ id: string; manifest: SuiteRunManifest }> = [];
     for (const entry of entries) {
       const manifestPath = path.join(runsDir, entry, 'manifest.json');
       try {
         const raw = await fs.readFile(manifestPath, 'utf8');
-        rows.push({ id: entry, manifest: JSON.parse(raw) as RunManifest });
+        const manifest = JSON.parse(raw) as SuiteRunManifest;
+        if (Array.isArray(manifest.variants)) rows.push({ id: entry, manifest });
       } catch {
-        // skip directories that aren't run folders
+        // skip directories that aren't suite run folders
       }
     }
 
@@ -39,9 +40,12 @@ export default class List extends Command {
 
     rows.sort((a, b) => b.manifest.startedAt.localeCompare(a.manifest.startedAt));
     for (const { id, manifest } of rows) {
-      const pct = manifest.rowCount > 0 ? (manifest.passCount / manifest.rowCount) * 100 : 0;
+      const totalRows = manifest.variants.reduce((a, v) => a + v.rowCount, 0);
+      const totalPasses = manifest.variants.reduce((a, v) => a + v.passCount, 0);
+      const pct = totalRows > 0 ? (totalPasses / totalRows) * 100 : 0;
+      const variantList = manifest.variants.map((v) => v.name).join(', ');
       this.log(
-        `${id}  ${manifest.name.padEnd(20)}  ${manifest.passCount}/${manifest.rowCount} (${pct.toFixed(1)}%)  ${manifest.model.provider}:${manifest.model.id}`,
+        `${id}  ${manifest.suiteName.padEnd(20)}  ${totalPasses}/${totalRows} (${pct.toFixed(1)}%)  [${variantList}]`,
       );
     }
   }

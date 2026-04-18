@@ -7,7 +7,7 @@ import {
   resolveVariant,
   runSuite,
   silentLogger,
-  writeRunArtifacts,
+  writeVariantArtifacts,
   type LLMSession,
   type SuiteConfig,
 } from '../../src/index.js';
@@ -89,12 +89,12 @@ describe('runner integration', () => {
     // a + b pass (label matches, score matches), c fails score (|7-99|)
     expect(result.manifest.passCount).toBe(2);
 
-    const artifactsDir = path.join(baseDir, 'runs');
-    const artifacts = await writeRunArtifacts({
+    const variantDir = path.join(baseDir, 'runs', 'suite', resolved.variantName);
+    const artifacts = await writeVariantArtifacts({
       config: resolved,
       manifest: result.manifest,
       results: result.results,
-      outDir: artifactsDir,
+      variantDir,
     });
 
     const [csv, json, manifest, html] = await Promise.all([

@@ -11,19 +11,24 @@ const cfg: SuiteConfig = {
 };
 
 describe('generateRunId', () => {
-  test('starts with an ISO-like timestamp and includes the name', () => {
+  test('joins name and timestamp with a hyphen', () => {
     const id = generateRunId('my-run', new Date('2026-04-17T12:34:56Z'));
-    expect(id).toMatch(/^2026-04-17T12-34-56_my-run_[a-f0-9]{6}$/);
+    expect(id).toBe('my-run-2026-04-17T12-34-56');
   });
 
   test('sanitizes non-safe characters from the name', () => {
-    const id = generateRunId('my/run?with spaces!');
-    expect(id).toMatch(/my-run-with-spaces-/);
+    const id = generateRunId('my/run?with spaces!', new Date('2026-04-17T12:34:56Z'));
+    expect(id).toBe('my-run-with-spaces-2026-04-17T12-34-56');
   });
 
-  test('produces a different id on each call', () => {
-    const a = generateRunId('x');
-    const b = generateRunId('x');
+  test('falls back to "run" when the name sanitizes to empty', () => {
+    const id = generateRunId('!!!', new Date('2026-04-17T12:34:56Z'));
+    expect(id).toBe('run-2026-04-17T12-34-56');
+  });
+
+  test('distinct timestamps produce distinct ids', () => {
+    const a = generateRunId('x', new Date('2026-04-17T12:34:56Z'));
+    const b = generateRunId('x', new Date('2026-04-17T12:34:57Z'));
     expect(a).not.toBe(b);
   });
 });

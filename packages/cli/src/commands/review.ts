@@ -7,7 +7,7 @@ export default class Review extends Command {
 
   static override args = {
     runDir: Args.string({
-      description: 'Path to a run folder (e.g. runs/<timestamp>)',
+      description: 'Path to a variant run folder, e.g. runs/<suite-run>/<variant>',
       required: true,
     }),
   };

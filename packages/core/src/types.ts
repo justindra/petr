@@ -282,6 +282,8 @@ export interface RunManifest {
   /** Name of the variant this run used — `variantName` inside the suite config. */
   variantName: string;
   runId: string;
+  /** Absolute path of the config file's directory, for resolving relative paths at review time. */
+  baseDir: string;
   startedAt: string;
   endedAt: string;
   /** SHA-256 prefix of the serialized config — shifts when any config field changes. */
@@ -306,4 +308,27 @@ export interface NotesEntry {
   text: string;
   tags?: string[];
   updatedAt: string;
+}
+
+/**
+ * Top-level manifest for a `petr run` invocation — one of these per suite run
+ * folder. Each variant has its own per-run manifest nested one level deeper,
+ * but the `SuiteRunManifest` is what tooling reads first to discover variants
+ * and run metadata.
+ */
+export interface SuiteRunManifest {
+  suiteName: string;
+  suiteRunId: string;
+  startedAt: string;
+  endedAt: string;
+  gitSha: string | null;
+  /** Absolute path to the config file's directory, for dataset resolution. */
+  baseDir: string;
+  /** Path of each variant's subfolder relative to the suite run folder. */
+  variants: Array<{
+    name: string;
+    dir: string;
+    passCount: number;
+    rowCount: number;
+  }>;
 }

@@ -42,7 +42,12 @@ export async function startReviewServer(
 ): Promise<ReviewServerHandle> {
   const payload = await loadRunPayload(opts.runDir);
   const bundle = loadUiBundle();
-  const datasetPath = path.resolve(opts.runDir, '..', '..', payload.manifest.datasetPath);
+  // Prefer the manifest's stored baseDir (new layout records it); fall back
+  // to the legacy "two up from the variant folder" assumption so old run
+  // folders keep working.
+  const datasetPath = payload.manifest.baseDir
+    ? path.resolve(payload.manifest.baseDir, payload.manifest.datasetPath)
+    : path.resolve(opts.runDir, '..', '..', payload.manifest.datasetPath);
 
   const host = opts.host ?? '127.0.0.1';
   const port = opts.port ?? 0;

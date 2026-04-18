@@ -129,6 +129,7 @@ export async function runSuite(opts: RunSuiteOptions): Promise<RunSuiteResult> {
     name: config.name,
     variantName: config.variantName,
     runId,
+    baseDir,
     startedAt: startedAt.toISOString(),
     endedAt: endedAt.toISOString(),
     configHash: hashConfig(config),

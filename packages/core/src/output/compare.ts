@@ -1,98 +1,103 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { EvalConfig, RowResult, RunManifest } from '../types';
+import type { EvalConfig, EvalResult, RowResult, RunManifest } from '../types';
 import { writeCsv } from './csv';
 import { encodeRow, stringifyJson } from './csv-utils';
 import { writeHtmlReport } from './html';
 import { writeJson } from './json';
 
-/** Minimal shape buildCompareData needs from either side's config. */
-type CompareSideConfig = { name: string; evals: EvalConfig[] };
-
-/** One side of a comparison — either baseline (A) or candidate (B). */
-export interface CompareSideData {
-  /** Only `name` (used as the column label) and `evals` (for the summary) are read. */
-  config: CompareSideConfig;
+/** One variant's materialized run output feeding into a compare. */
+export interface CompareSide {
+  /** Display label — usually `<suite>/<variantName>`. */
+  label: string;
+  /** Only the eval names are read (to derive the summary table headers). */
+  evals: EvalConfig[];
   manifest: RunManifest;
   results: RowResult[];
 }
 
-/** One row in a comparison, with outputs and errors from each side joined by id. */
+/** A single row in the compare, with every variant's output for that input joined by row id. */
 export interface CompareRow {
   id: string;
   input: unknown;
   expected: unknown;
-  outputA: unknown;
-  outputB: unknown;
-  passA: boolean;
-  passB: boolean;
-  errorA: string | null;
-  errorB: string | null;
-  evalsA: RowResult['evals'];
-  evalsB: RowResult['evals'];
+  /** Keyed by variant label. `null` when a variant didn't produce this row. */
+  outputs: Record<string, unknown>;
+  passes: Record<string, boolean>;
+  errors: Record<string, string | null>;
+  evalResults: Record<string, EvalResult[]>;
 }
 
-/** Per-eval pass rates across the two runs. `delta` is B minus A. */
+/**
+ * One eval's pass rate across every variant. Not a delta — with N variants
+ * the "baseline" becomes ambiguous, so consumers eyeball the row themselves.
+ */
 export interface CompareSummaryRow {
   eval: string;
-  passRateA: number;
-  passRateB: number;
-  delta: number;
+  /** Keyed by variant label. */
+  passRates: Record<string, number>;
 }
 
-/** Full comparison payload — what a compare report renders and what's written to `results.json`. */
+/** Full comparison payload. Supports any number of variants. */
 export interface CompareData {
-  aLabel: string;
-  bLabel: string;
-  manifestA: RunManifest;
-  manifestB: RunManifest;
+  /** Variant labels in display order — use these as column keys everywhere. */
+  variants: string[];
+  manifests: Record<string, RunManifest>;
   rows: CompareRow[];
   summary: CompareSummaryRow[];
 }
 
 /**
- * Joins two runs by row id and computes per-eval pass-rate deltas.
+ * Joins N runs by row id and computes per-eval pass rates per variant.
  *
- * Rows unique to side A carry through; rows unique to B are dropped (rare —
- * happens if the two configs point at different datasets). Dataset symmetry
- * is the caller's responsibility.
+ * Row order follows the first side — any row id not present in side 0 is
+ * dropped. Variants missing a given row produce `null` outputs and `false`
+ * passes in that column. Dataset symmetry is still the caller's responsibility.
  */
-export function buildCompareData(a: CompareSideData, b: CompareSideData): CompareData {
-  const byIdB = new Map(b.results.map((r) => [r.id, r]));
-  const rows: CompareRow[] = a.results.map((rA) => {
-    const rB = byIdB.get(rA.id);
+export function buildCompareData(sides: CompareSide[]): CompareData {
+  if (sides.length < 2) {
+    throw new Error(`buildCompareData needs at least 2 sides, got ${sides.length}`);
+  }
+  const variants = sides.map((s) => s.label);
+  const resultsByVariant = new Map(
+    sides.map((s) => [s.label, new Map(s.results.map((r) => [r.id, r]))]),
+  );
+
+  const firstSide = sides[0]!;
+  const rows: CompareRow[] = firstSide.results.map((firstRow) => {
+    const outputs: Record<string, unknown> = {};
+    const passes: Record<string, boolean> = {};
+    const errors: Record<string, string | null> = {};
+    const evalResults: Record<string, EvalResult[]> = {};
+    for (const label of variants) {
+      const r = resultsByVariant.get(label)!.get(firstRow.id);
+      outputs[label] = r?.output ?? null;
+      passes[label] = r?.pass ?? false;
+      errors[label] = r?.error ?? null;
+      evalResults[label] = r?.evals ?? [];
+    }
     return {
-      id: rA.id,
-      input: rA.input,
-      expected: rA.expected,
-      outputA: rA.output,
-      outputB: rB?.output ?? null,
-      passA: rA.pass,
-      passB: rB?.pass ?? false,
-      errorA: rA.error,
-      errorB: rB?.error ?? null,
-      evalsA: rA.evals,
-      evalsB: rB?.evals ?? [],
+      id: firstRow.id,
+      input: firstRow.input,
+      expected: firstRow.expected,
+      outputs,
+      passes,
+      errors,
+      evalResults,
     };
   });
 
-  const evalNames = [
-    ...new Set([...a.config.evals.map((e) => e.name), ...b.config.evals.map((e) => e.name)]),
-  ];
-  const summary: CompareSummaryRow[] = evalNames.map((name) => {
-    const rateA = passRate(a.results, name);
-    const rateB = passRate(b.results, name);
-    return { eval: name, passRateA: rateA, passRateB: rateB, delta: rateB - rateA };
+  const evalNames = [...new Set(sides.flatMap((s) => s.evals.map((e) => e.name)))];
+  const summary: CompareSummaryRow[] = evalNames.map((evalName) => {
+    const passRates: Record<string, number> = {};
+    for (const side of sides) passRates[side.label] = passRate(side.results, evalName);
+    return { eval: evalName, passRates };
   });
 
-  return {
-    aLabel: a.config.name,
-    bLabel: b.config.name,
-    manifestA: a.manifest,
-    manifestB: b.manifest,
-    rows,
-    summary,
-  };
+  const manifests: Record<string, RunManifest> = {};
+  for (const side of sides) manifests[side.label] = side.manifest;
+
+  return { variants, manifests, rows, summary };
 }
 
 function passRate(results: RowResult[], evalName: string): number {
@@ -102,86 +107,100 @@ function passRate(results: RowResult[], evalName: string): number {
   return passes / relevant.length;
 }
 
-/** Renders side-by-side row outputs as CSV (`output_A`, `output_B`, etc.). */
+/**
+ * Renders per-row outputs as CSV. Headers: `id, input, expected, pass_<v>…,
+ * output_<v>…, error_<v>…` for every variant `v`.
+ */
 export function compareRowsToCsv(data: CompareData): string {
   const headers = [
     'id',
-    'pass_A',
-    'pass_B',
-    'error_A',
-    'error_B',
     'input',
     'expected',
-    'output_A',
-    'output_B',
+    ...data.variants.map((v) => `pass_${v}`),
+    ...data.variants.map((v) => `output_${v}`),
+    ...data.variants.map((v) => `error_${v}`),
   ];
   const lines = [encodeRow(headers)];
   for (const r of data.rows) {
     lines.push(
       encodeRow([
         r.id,
-        String(r.passA),
-        String(r.passB),
-        r.errorA ?? '',
-        r.errorB ?? '',
         stringifyJson(r.input),
         stringifyJson(r.expected),
-        stringifyJson(r.outputA),
-        stringifyJson(r.outputB),
+        ...data.variants.map((v) => String(r.passes[v] ?? false)),
+        ...data.variants.map((v) => stringifyJson(r.outputs[v])),
+        ...data.variants.map((v) => r.errors[v] ?? ''),
       ]),
     );
   }
   return lines.join('\n') + '\n';
 }
 
-/** Renders the per-eval pass-rate summary as a small CSV suitable for dashboards. */
+/** Renders the per-eval pass-rate matrix: columns are variants, rows are evals. */
 export function compareSummaryToCsv(data: CompareData): string {
-  const headers = ['eval', 'pass_rate_A', 'pass_rate_B', 'delta'];
+  const headers = ['eval', ...data.variants.map((v) => `pass_rate_${v}`)];
   const lines = [encodeRow(headers)];
   for (const s of data.summary) {
-    lines.push(
-      encodeRow([s.eval, s.passRateA.toFixed(4), s.passRateB.toFixed(4), s.delta.toFixed(4)]),
-    );
+    lines.push(encodeRow([s.eval, ...data.variants.map((v) => (s.passRates[v] ?? 0).toFixed(4))]));
   }
   return lines.join('\n') + '\n';
 }
 
 /**
- * Formats a compare summary as a terminal-friendly block — one line per eval
- * showing pass rates on each side and the delta (percentage points).
+ * Formats a compare summary as a terminal-friendly block. For 2 variants the
+ * layout stays compact (one line per eval); for 3+, each eval gets a small
+ * column so the output stays readable at any width.
  *
- * @example
+ * @example (3 variants)
  * ```
- * Compare: demo-copilot vs demo-bedrock  (8 rows)
- *   label-match   100.0% → 100.0%   (+0.0pp)
- *   within-1       80.0% →  90.0%  (+10.0pp)
+ * Compare: demo  (8 rows, 3 variants)
+ *   label-match
+ *     copilot   100.0%
+ *     bedrock   100.0%
+ *     openai     87.5%
  * ```
  */
 export function formatCompareSummary(data: CompareData): string {
-  const header = `Compare: ${data.aLabel} vs ${data.bLabel}  (${data.rows.length} rows)`;
-  if (data.summary.length === 0) {
-    return `${header}\n  (no evals were run on both sides)`;
+  const header = `Compare: ${data.variants.length} variants  (${data.rows.length} rows)`;
+  if (data.summary.length === 0) return `${header}\n  (no evals were run on any variant)`;
+
+  if (data.variants.length === 2) {
+    const [a, b] = data.variants as [string, string];
+    const nameWidth = Math.max(...data.summary.map((s) => s.eval.length));
+    const labelBlock = `${a} → ${b}`;
+    const lines = [
+      header,
+      `  ${' '.repeat(nameWidth)}  ${labelBlock}`,
+      ...data.summary.map((s) => {
+        const aPct = (s.passRates[a] ?? 0) * 100;
+        const bPct = (s.passRates[b] ?? 0) * 100;
+        const delta = bPct - aPct;
+        const sign = delta >= 0 ? '+' : '';
+        return `  ${s.eval.padEnd(nameWidth)}  ${aPct.toFixed(1).padStart(6)}% → ${bPct
+          .toFixed(1)
+          .padStart(6)}%  (${sign}${delta.toFixed(1)}pp)`;
+      }),
+    ];
+    return lines.join('\n');
   }
-  const nameWidth = Math.max(...data.summary.map((s) => s.eval.length));
-  const lines = data.summary.map((s) => {
-    const a = (s.passRateA * 100).toFixed(1).padStart(6);
-    const b = (s.passRateB * 100).toFixed(1).padStart(6);
-    const deltaPp = s.delta * 100;
-    const sign = deltaPp >= 0 ? '+' : '';
-    const delta = `(${sign}${deltaPp.toFixed(1)}pp)`;
-    return `  ${s.eval.padEnd(nameWidth)}  ${a}% → ${b}%  ${delta}`;
-  });
-  return [header, ...lines].join('\n');
+
+  const variantWidth = Math.max(...data.variants.map((v) => v.length));
+  const lines = [header];
+  for (const s of data.summary) {
+    lines.push(`  ${s.eval}`);
+    for (const v of data.variants) {
+      const pct = (s.passRates[v] ?? 0) * 100;
+      lines.push(`    ${v.padEnd(variantWidth)}  ${pct.toFixed(1).padStart(6)}%`);
+    }
+  }
+  return lines.join('\n');
 }
 
 /** Arguments to {@link writeCompareArtifacts}. */
 export interface WriteCompareOptions {
-  a: CompareSideData;
-  b: CompareSideData;
-  /** Parent directory — a `<compareId>/` subfolder is created inside. */
-  outDir: string;
-  /** Folder name to use; generate a fresh one with {@link generateRunId}. */
-  compareId: string;
+  sides: CompareSide[];
+  /** Directory to write compare artifacts into (usually `<suiteRunDir>/compare/`). */
+  compareDir: string;
 }
 
 /** Absolute paths of each compare artifact that was written. */
@@ -194,30 +213,25 @@ export interface WriteCompareResult {
 }
 
 /**
- * Writes a comparison folder: `results.csv` (per-row outputs), `summary.csv`
- * (eval pass rates + deltas), `results.json`, and a self-contained `report.html`.
+ * Writes a comparison folder: `results.csv` (per-row outputs, N variant
+ * columns), `summary.csv` (eval × variant pass rate matrix), `results.json`,
+ * and a self-contained `report.html`.
  */
 export async function writeCompareArtifacts(
   opts: WriteCompareOptions,
 ): Promise<WriteCompareResult> {
-  const compareDir = path.join(opts.outDir, opts.compareId);
-  await fs.mkdir(compareDir, { recursive: true });
+  await fs.mkdir(opts.compareDir, { recursive: true });
+  const data = buildCompareData(opts.sides);
 
-  const data = buildCompareData(opts.a, opts.b);
-
-  const csvPath = path.join(compareDir, 'results.csv');
-  const summaryPath = path.join(compareDir, 'summary.csv');
-  const jsonPath = path.join(compareDir, 'results.json');
-  const htmlPath = path.join(compareDir, 'report.html');
+  const csvPath = path.join(opts.compareDir, 'results.csv');
+  const summaryPath = path.join(opts.compareDir, 'summary.csv');
+  const jsonPath = path.join(opts.compareDir, 'results.json');
+  const htmlPath = path.join(opts.compareDir, 'report.html');
 
   await writeCsv(csvPath, compareRowsToCsv(data));
   await writeCsv(summaryPath, compareSummaryToCsv(data));
   await writeJson(jsonPath, data);
-  await writeHtmlReport(htmlPath, {
-    mode: 'compare',
-    manifest: null,
-    compare: data,
-  });
+  await writeHtmlReport(htmlPath, { mode: 'compare', manifest: null, compare: data });
 
-  return { compareDir, csvPath, summaryPath, jsonPath, htmlPath };
+  return { compareDir: opts.compareDir, csvPath, summaryPath, jsonPath, htmlPath };
 }
