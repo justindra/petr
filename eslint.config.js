@@ -32,6 +32,10 @@ export default [
         setImmediate: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
+        Headers: 'readonly',
+        RequestInit: 'readonly',
       },
     },
     plugins: {

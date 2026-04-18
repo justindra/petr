@@ -8,7 +8,7 @@ export interface DatasetRow<Input = unknown, Expected = unknown> {
 }
 
 export interface ModelConfig {
-  provider: 'anthropic' | 'bedrock' | 'openai' | 'google';
+  provider: 'anthropic' | 'bedrock' | 'openai' | 'google' | 'copilot';
   id: string;
   temperature?: number;
   maxTokens?: number;

@@ -4,6 +4,7 @@ import { google } from '@ai-sdk/google';
 import { openai } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 import type { ModelConfig } from '../types.js';
+import { createCopilotModel } from './copilot.js';
 
 export function resolveModel(cfg: ModelConfig): LanguageModel {
   switch (cfg.provider) {
@@ -15,6 +16,8 @@ export function resolveModel(cfg: ModelConfig): LanguageModel {
       return openai(cfg.id);
     case 'google':
       return google(cfg.id);
+    case 'copilot':
+      return createCopilotModel(cfg.id);
   }
 }
 
