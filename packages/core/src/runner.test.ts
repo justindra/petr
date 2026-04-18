@@ -2,15 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import type { LLMSession } from './context.js';
-import { runSuite } from './runner.js';
+import type { LLMSession } from './context';
+import { runSuite } from './runner';
 import type {
   GenerateTextArgs,
   GenerateTextResult,
   LLMContext,
   PromptFn,
   SuiteConfig,
-} from './types.js';
+} from './types';
 
 function fakeSession(reply: string): LLMSession {
   const llm: LLMContext = {

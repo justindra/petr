@@ -16,7 +16,10 @@ const run: PromptFn<Input, Output> = async (input, ctx) => {
     system: SYSTEM,
     prompt: input.message,
   });
-  const normalized = text.trim().toLowerCase().replace(/[.!?"'`]/g, '');
+  const normalized = text
+    .trim()
+    .toLowerCase()
+    .replace(/[.!?"'`]/g, '');
   if (normalized === 'positive' || normalized === 'negative' || normalized === 'neutral') {
     return { label: normalized };
   }

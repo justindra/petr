@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { defineConfig, loadConfig, validateConfig } from './config.js';
-import type { SuiteConfig } from './types.js';
+import { defineConfig, loadConfig, validateConfig } from './config';
+import type { SuiteConfig } from './types';
 
 const baseConfig: SuiteConfig = {
   name: 'test',

@@ -1,16 +1,21 @@
 import fs from 'node:fs/promises';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import path from 'node:path';
-import { readNotes, writeNote } from '../dataset.js';
-import type { NotesEntry, RowResult, RunManifest } from '../types.js';
-import { loadUiBundle } from './ui-bundle.js';
+import { readNotes, writeNote } from '../dataset';
+import type { NotesEntry, RowResult, RunManifest } from '../types';
+import { loadUiBundle } from './ui-bundle';
 
+/** Arguments to {@link startReviewServer}. */
 export interface StartReviewServerOptions {
+  /** Run folder to serve (must contain `results.json`). */
   runDir: string;
+  /** Bind port. Pass `0` to get a free port (fine for tests). */
   port?: number;
+  /** Bind address. Defaults to loopback. */
   host?: string;
 }
 
+/** Returned by {@link startReviewServer} — holds the URL and a way to stop. */
 export interface ReviewServerHandle {
   url: string;
   port: number;
@@ -22,6 +27,16 @@ interface RunPayload {
   results: RowResult[];
 }
 
+/**
+ * Starts the review server for a finished run. Exposes:
+ *
+ * - `GET /api/run` — manifest + results + notes merged from the sidecar
+ * - `POST /api/notes/:rowId` — upserts a note (body: `{text, tags?}`) and
+ *   writes it atomically to the dataset's notes sidecar
+ * - `GET /*` — serves the built review UI (or a 500 if the UI hasn't been built)
+ *
+ * Intended for local review only — no auth, no TLS, binds to loopback by default.
+ */
 export async function startReviewServer(
   opts: StartReviewServerOptions,
 ): Promise<ReviewServerHandle> {

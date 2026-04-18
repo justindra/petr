@@ -10,7 +10,10 @@ import type { LanguageModel } from 'ai';
 function createCopilotFetch(): typeof globalThis.fetch {
   // Cast: createOpenAI's type demands the full fetch interface (including preconnect),
   // but at runtime the SDK only invokes the function. The cast is safe.
-  return (async (input: Parameters<typeof globalThis.fetch>[0], init?: Parameters<typeof globalThis.fetch>[1]) => {
+  return (async (
+    input: Parameters<typeof globalThis.fetch>[0],
+    init?: Parameters<typeof globalThis.fetch>[1],
+  ) => {
     const response = await globalThis.fetch(input, init);
     const contentType = response.headers.get('content-type') ?? '';
     if (!contentType.includes('application/json')) return response;
@@ -93,6 +96,15 @@ function createCopilotFetch(): typeof globalThis.fetch {
   }) as typeof globalThis.fetch;
 }
 
+/**
+ * Builds a Vercel AI SDK language model that talks to `api.githubcopilot.com`
+ * (the same endpoint VS Code Copilot Chat uses) with any of Copilot's
+ * supported model ids: `claude-sonnet-4.6`, `claude-haiku-4.5`, `gpt-5`, etc.
+ *
+ * Requires `GITHUB_COPILOT_TOKEN` — a Copilot OAuth token, not a GitHub PAT.
+ * This endpoint is not officially documented for third-party use; GitHub can
+ * change or block it at any time.
+ */
 export function createCopilotModel(modelId: string): LanguageModel {
   const token = process.env['GITHUB_COPILOT_TOKEN'];
   if (!token) {

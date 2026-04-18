@@ -1,5 +1,5 @@
-import type { DatasetRow, EvalResult, WithinNEvalConfig } from '../types.js';
-import { resolveActual, resolveExpected } from './path.js';
+import type { DatasetRow, EvalResult, WithinNEvalConfig } from '../types';
+import { resolveActual, resolveExpected } from './path';
 
 export function runWithinN(cfg: WithinNEvalConfig, actual: unknown, row: DatasetRow): EvalResult {
   const a = toNumber(resolveActual(cfg, actual));

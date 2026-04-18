@@ -4,7 +4,7 @@ import { Button } from './button';
 import { Subheading } from './heading';
 import { Textarea } from './textarea';
 
-export interface NotesPanelProps {
+interface NotesPanelProps {
   rowId: string;
   initial: NotesEntry | null;
   readOnly: boolean;

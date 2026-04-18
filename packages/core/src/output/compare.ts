@@ -1,16 +1,19 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { RowResult, RunManifest, SuiteConfig } from '../types.js';
-import { writeCsv } from './csv.js';
-import { writeHtmlReport } from './html.js';
-import { writeJson } from './json.js';
+import type { RowResult, RunManifest, SuiteConfig } from '../types';
+import { writeCsv } from './csv';
+import { encodeRow, stringifyJson } from './csv-utils';
+import { writeHtmlReport } from './html';
+import { writeJson } from './json';
 
+/** One side of a comparison — either baseline (A) or candidate (B). */
 export interface CompareSideData {
   config: SuiteConfig;
   manifest: RunManifest;
   results: RowResult[];
 }
 
+/** One row in a comparison, with outputs and errors from each side joined by id. */
 export interface CompareRow {
   id: string;
   input: unknown;
@@ -25,6 +28,7 @@ export interface CompareRow {
   evalsB: RowResult['evals'];
 }
 
+/** Per-eval pass rates across the two runs. `delta` is B minus A. */
 export interface CompareSummaryRow {
   eval: string;
   passRateA: number;
@@ -32,6 +36,7 @@ export interface CompareSummaryRow {
   delta: number;
 }
 
+/** Full comparison payload — what a compare report renders and what's written to `results.json`. */
 export interface CompareData {
   aLabel: string;
   bLabel: string;
@@ -41,6 +46,13 @@ export interface CompareData {
   summary: CompareSummaryRow[];
 }
 
+/**
+ * Joins two runs by row id and computes per-eval pass-rate deltas.
+ *
+ * Rows unique to side A carry through; rows unique to B are dropped (rare —
+ * happens if the two configs point at different datasets). Dataset symmetry
+ * is the caller's responsibility.
+ */
 export function buildCompareData(a: CompareSideData, b: CompareSideData): CompareData {
   const byIdB = new Map(b.results.map((r) => [r.id, r]));
   const rows: CompareRow[] = a.results.map((rA) => {
@@ -86,6 +98,7 @@ function passRate(results: RowResult[], evalName: string): number {
   return passes / relevant.length;
 }
 
+/** Renders side-by-side row outputs as CSV (`output_A`, `output_B`, etc.). */
 export function compareRowsToCsv(data: CompareData): string {
   const headers = [
     'id',
@@ -117,6 +130,7 @@ export function compareRowsToCsv(data: CompareData): string {
   return lines.join('\n') + '\n';
 }
 
+/** Renders the per-eval pass-rate summary as a small CSV suitable for dashboards. */
 export function compareSummaryToCsv(data: CompareData): string {
   const headers = ['eval', 'pass_rate_A', 'pass_rate_B', 'delta'];
   const lines = [encodeRow(headers)];
@@ -128,13 +142,17 @@ export function compareSummaryToCsv(data: CompareData): string {
   return lines.join('\n') + '\n';
 }
 
+/** Arguments to {@link writeCompareArtifacts}. */
 export interface WriteCompareOptions {
   a: CompareSideData;
   b: CompareSideData;
+  /** Parent directory — a `<compareId>/` subfolder is created inside. */
   outDir: string;
+  /** Folder name to use; generate a fresh one with {@link generateRunId}. */
   compareId: string;
 }
 
+/** Absolute paths of each compare artifact that was written. */
 export interface WriteCompareResult {
   compareDir: string;
   csvPath: string;
@@ -143,6 +161,10 @@ export interface WriteCompareResult {
   htmlPath: string;
 }
 
+/**
+ * Writes a comparison folder: `results.csv` (per-row outputs), `summary.csv`
+ * (eval pass rates + deltas), `results.json`, and a self-contained `report.html`.
+ */
 export async function writeCompareArtifacts(
   opts: WriteCompareOptions,
 ): Promise<WriteCompareResult> {
@@ -166,23 +188,4 @@ export async function writeCompareArtifacts(
   });
 
   return { compareDir, csvPath, summaryPath, jsonPath, htmlPath };
-}
-
-function encodeRow(cells: string[]): string {
-  return cells.map(escapeCell).join(',');
-}
-
-function escapeCell(v: string): string {
-  if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
-  return v;
-}
-
-function stringifyJson(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
 }

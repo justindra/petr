@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export interface UiBundle {
+interface UiBundle {
   indexHtml: string;
   scripts: Map<string, string>;
   styles: Map<string, string>;
@@ -15,7 +15,7 @@ const CANDIDATE_PATHS = [
   path.resolve(import.meta.dirname, '../../../ui/dist'),
 ];
 
-export function findUiBundleDir(): string | null {
+function findUiBundleDir(): string | null {
   for (const candidate of CANDIDATE_PATHS) {
     if (fs.existsSync(path.join(candidate, 'index.html'))) return candidate;
   }

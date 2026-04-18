@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { estimateCostUsd } from './pricing.js';
+import { estimateCostUsd } from './pricing';
 
 describe('estimateCostUsd', () => {
   test('computes cost for known models', () => {

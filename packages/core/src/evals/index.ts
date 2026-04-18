@@ -1,17 +1,24 @@
-import type { DatasetRow, EvalConfig, EvalResult, LLMContext, Logger } from '../types.js';
-import { runBoolean } from './boolean.js';
-import { runContains } from './contains.js';
-import { runCustom } from './custom.js';
-import { runEquals } from './equals.js';
-import { runRegex } from './regex.js';
-import { runWithinN } from './within-n.js';
+import type { DatasetRow, EvalConfig, EvalResult, LLMContext, Logger } from '../types';
+import { runBoolean } from './boolean';
+import { runContains } from './contains';
+import { runCustom } from './custom';
+import { runEquals } from './equals';
+import { runRegex } from './regex';
+import { runWithinN } from './within-n';
 
+/** Shared context for eval dispatch — the runner builds one per row. */
 export interface RunEvalsDeps {
   llm: LLMContext;
   logger: Logger;
+  /** Base directory for resolving `custom` eval file paths. */
   baseDir: string;
 }
 
+/**
+ * Runs every eval in `configs` against a single prompt output and returns the
+ * results in order. Evals execute sequentially so order-dependent custom evals
+ * can rely on earlier results being available in logs.
+ */
 export async function runEvals(
   configs: EvalConfig[],
   actual: unknown,
@@ -49,5 +56,3 @@ async function runSingleEval(
       });
   }
 }
-
-export { runBoolean, runContains, runCustom, runEquals, runRegex, runWithinN };

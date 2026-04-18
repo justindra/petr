@@ -1,10 +1,13 @@
-import type { ModelConfig } from '../types.js';
+import type { ModelConfig } from '../types';
 
+/** USD price per million tokens, as published by each provider. */
 export interface Pricing {
   inputPerMillion: number;
   outputPerMillion: number;
 }
 
+// Rates are the published on-demand list prices at the time of writing.
+// They drift over time — update when they change, or when adding new models.
 const TABLE: Record<string, Pricing> = {
   'anthropic:claude-opus-4-7': { inputPerMillion: 15, outputPerMillion: 75 },
   'anthropic:claude-sonnet-4-6': { inputPerMillion: 3, outputPerMillion: 15 },
@@ -15,6 +18,13 @@ const TABLE: Record<string, Pricing> = {
   'google:gemini-1.5-pro': { inputPerMillion: 1.25, outputPerMillion: 5 },
 };
 
+/**
+ * Estimates the total USD cost for a run. Returns `null` when the model isn't
+ * in the pricing table — we'd rather not show a wrong number than make one up.
+ *
+ * Cost estimation ignores `copilot` models since that route bills against the
+ * user's Copilot subscription, not per-token.
+ */
 export function estimateCostUsd(
   model: ModelConfig,
   tokensIn: number,

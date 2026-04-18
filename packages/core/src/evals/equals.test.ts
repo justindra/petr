@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DatasetRow } from '../types.js';
-import { runEquals } from './equals.js';
+import type { DatasetRow } from '../types';
+import { runEquals } from './equals';
 
 const row: DatasetRow = {
   id: 'r1',

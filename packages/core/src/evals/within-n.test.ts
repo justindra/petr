@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DatasetRow } from '../types.js';
-import { runWithinN } from './within-n.js';
+import type { DatasetRow } from '../types';
+import { runWithinN } from './within-n';
 
 const row: DatasetRow = { id: 'r', input: {}, expected: { score: 5 } };
 

@@ -1,4 +1,4 @@
-import type { DatasetRow } from '../types.js';
+import type { DatasetRow } from '../types';
 
 export function getPath(obj: unknown, path: string | undefined): unknown {
   if (!path) return obj;

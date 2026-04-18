@@ -1,19 +1,32 @@
 import { generateText as aiGenerateText, type ModelMessage } from 'ai';
-import { resolveModel } from './providers/index.js';
+import { resolveModel } from './providers';
 import type {
   GenerateTextArgs,
   GenerateTextResult,
   LLMContext,
   ModelConfig,
   TranscriptEntry,
-} from './types.js';
+} from './types';
 
+/**
+ * A per-row LLM session. `llm` is the model-bound surface passed into the
+ * user's prompt; `getUsage` and `getTranscript` drain the accumulated state
+ * after the prompt returns so the runner can attach it to the row result.
+ */
 export interface LLMSession {
   llm: LLMContext;
   getUsage(): { inputTokens: number; outputTokens: number; totalTokens: number };
   getTranscript(): TranscriptEntry[];
 }
 
+/**
+ * Builds a fresh {@link LLMSession} for one row. Usage and transcript live in
+ * the closure so each row's numbers stay isolated even when rows run in
+ * parallel.
+ *
+ * Pass this (or a stub with the same shape) to {@link RunSuiteOptions.buildSession}
+ * when embedding the runner programmatically.
+ */
 export function buildLLMContext(modelCfg: ModelConfig): LLMSession {
   const model = resolveModel(modelCfg);
   const usage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };

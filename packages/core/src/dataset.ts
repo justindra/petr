@@ -1,8 +1,18 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { DatasetRow, NotesEntry } from './types.js';
+import type { DatasetRow, NotesEntry } from './types';
 
+/**
+ * Parses a JSONL dataset file into an array of rows.
+ *
+ * Blank lines are skipped. Rows missing an `id` get a 12-character content
+ * hash derived from `input` + `expected`, so notes anchored to a row survive
+ * dataset re-ordering but break if the row's content changes.
+ *
+ * @throws On malformed JSON (with line number), rows missing an `input` field,
+ *   or duplicate row ids.
+ */
 export async function readDataset(datasetPath: string): Promise<DatasetRow[]> {
   let text: string;
   try {
@@ -54,12 +64,20 @@ function hashRow(row: Partial<DatasetRow>): string {
   return createHash('sha256').update(payload).digest('hex').slice(0, 12);
 }
 
+/**
+ * Derives the sidecar notes path for a dataset — `foo.jsonl` → `foo.notes.jsonl`.
+ * Notes are kept next to the dataset so they get versioned in the same repo.
+ */
 export function notesPathFor(datasetPath: string): string {
   const ext = path.extname(datasetPath);
   const base = ext.length > 0 ? datasetPath.slice(0, -ext.length) : datasetPath;
   return `${base}.notes.jsonl`;
 }
 
+/**
+ * Reads the notes sidecar into a map keyed by `rowId`. Returns an empty map
+ * when the sidecar doesn't exist yet (normal for a fresh dataset).
+ */
 export async function readNotes(datasetPath: string): Promise<Map<string, NotesEntry>> {
   const p = notesPathFor(datasetPath);
   const map = new Map<string, NotesEntry>();
@@ -79,6 +97,10 @@ export async function readNotes(datasetPath: string): Promise<Map<string, NotesE
   return map;
 }
 
+/**
+ * Upserts a single note into the sidecar and writes atomically (tmp + rename)
+ * so the file is never observed half-written during concurrent reviews.
+ */
 export async function writeNote(datasetPath: string, entry: NotesEntry): Promise<void> {
   const all = await readNotes(datasetPath);
   all.set(entry.rowId, entry);

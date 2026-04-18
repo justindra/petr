@@ -3,7 +3,7 @@ import type { RowResult } from '../api';
 import { Badge } from './badge';
 import { Input } from './input';
 
-export interface RowListProps {
+interface RowListProps {
   rows: RowResult[];
   selectedId: string | null;
   onSelect(id: string): void;

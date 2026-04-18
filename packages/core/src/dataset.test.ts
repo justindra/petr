@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { notesPathFor, readDataset, readNotes, writeNote } from './dataset.js';
+import { notesPathFor, readDataset, readNotes, writeNote } from './dataset';
 
 async function tmpdir(): Promise<string> {
   return fs.mkdtemp(path.join(os.tmpdir(), 'petr-ds-'));

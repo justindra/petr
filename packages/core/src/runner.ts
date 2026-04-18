@@ -1,12 +1,12 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { resolveRelativeToConfig } from './config.js';
-import { buildLLMContext, type LLMSession } from './context.js';
-import { readDataset } from './dataset.js';
-import { runEvals } from './evals/index.js';
-import { consoleLogger } from './logger.js';
-import { generateRunId, hashConfig, tryGitSha } from './manifest.js';
-import { estimateCostUsd } from './providers/pricing.js';
+import { resolveRelativeToConfig } from './config';
+import { buildLLMContext, type LLMSession } from './context';
+import { readDataset } from './dataset';
+import { runEvals } from './evals';
+import { consoleLogger } from './logger';
+import { generateRunId, hashConfig, tryGitSha } from './manifest';
+import { estimateCostUsd } from './providers/pricing';
 import type {
   DatasetRow,
   EvalResult,
@@ -16,28 +16,52 @@ import type {
   RunContext,
   RunManifest,
   SuiteConfig,
-} from './types.js';
+} from './types';
 
+/** Arguments to {@link runSuite}. */
 export interface RunSuiteOptions {
+  /** Already-loaded suite config. Use `loadConfig` to parse from disk. */
   config: SuiteConfig;
+  /** Directory to resolve `config.dataset` and `config.prompt` against. */
   baseDir: string;
+  /** Overrides `config.concurrency`. Default: 4. */
   concurrency?: number;
+  /** Overrides `config.maxRetries`. Default: 3. */
   maxRetries?: number;
+  /** If set, runs only the first N rows of the dataset. Handy for iteration. */
   limit?: number;
+  /** Custom logger; defaults to a console logger tagged with the run id. */
   logger?: Logger;
+  /** Called after each row finishes — even failed ones. */
   onRow?: (row: RowResult, totalRows: number) => void;
+  /**
+   * Seam for tests: replaces {@link buildLLMContext} so no real provider calls
+   * happen. Each row gets its own session via this factory.
+   */
   buildSession?: (cfg: SuiteConfig['model']) => LLMSession;
+  /** Seam for tests: replaces the default dynamic import of the prompt file. */
   loadPrompt?: (path: string) => Promise<PromptFn>;
 }
 
+/** Return value of {@link runSuite}. */
 export interface RunSuiteResult {
   manifest: RunManifest;
+  /** Ordered to match the dataset order, regardless of completion order. */
   results: RowResult[];
 }
 
 const DEFAULT_CONCURRENCY = 4;
 const DEFAULT_MAX_RETRIES = 3;
 
+/**
+ * Runs a suite against its dataset. Each row is executed in parallel up to
+ * `concurrency`; transient failures retry with exponential backoff up to
+ * `maxRetries`. A row that exhausts its retries is captured as an error row
+ * and doesn't stop the rest of the run.
+ *
+ * This is the core entry point for programmatic use — the `petr run` CLI is
+ * a thin wrapper over it + {@link writeRunArtifacts}.
+ */
 export async function runSuite(opts: RunSuiteOptions): Promise<RunSuiteResult> {
   const {
     config,

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DatasetRow } from '../types.js';
-import { runBoolean } from './boolean.js';
+import type { DatasetRow } from '../types';
+import { runBoolean } from './boolean';
 
 const row: DatasetRow = { id: 'r', input: {}, expected: { answer: true } };
 

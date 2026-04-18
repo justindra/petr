@@ -2,9 +2,9 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { readNotes } from '../dataset.js';
-import type { ReviewServerHandle } from './server.js';
-import { startReviewServer } from './server.js';
+import { readNotes } from '../dataset';
+import type { ReviewServerHandle } from './server';
+import { startReviewServer } from './server';
 
 let handle: ReviewServerHandle;
 let runDir: string;

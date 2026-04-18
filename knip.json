@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    "packages/ui": {
+      "ignore": [
+        "src/components/alert.tsx",
+        "src/components/auth-layout.tsx",
+        "src/components/avatar.tsx",
+        "src/components/checkbox.tsx",
+        "src/components/combobox.tsx",
+        "src/components/description-list.tsx",
+        "src/components/dialog.tsx",
+        "src/components/dropdown.tsx",
+        "src/components/fieldset.tsx",
+        "src/components/listbox.tsx",
+        "src/components/navbar.tsx",
+        "src/components/pagination.tsx",
+        "src/components/radio.tsx",
+        "src/components/select.tsx",
+        "src/components/sidebar-layout.tsx",
+        "src/components/sidebar.tsx",
+        "src/components/stacked-layout.tsx",
+        "src/components/switch.tsx",
+        "src/components/table.tsx",
+        "src/components/text.tsx"
+      ],
+      "ignoreDependencies": ["@heroicons/react", "motion"]
+    },
+    "examples/demo": {
+      "entry": ["petr.config.ts", "prompt.ts"]
+    }
+  }
+}

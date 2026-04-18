@@ -3,7 +3,7 @@ import { Badge } from './badge';
 import { Divider } from './divider';
 import { Heading, Subheading } from './heading';
 
-export interface RowDetailProps {
+interface RowDetailProps {
   row: RowResult;
 }
 

@@ -8,11 +8,11 @@ import type {
   EvalResult,
   LLMContext,
   Logger,
-} from '../types.js';
+} from '../types';
 
 const moduleCache = new Map<string, EvalFn>();
 
-export async function loadCustomEval(cfg: CustomEvalConfig, baseDir: string): Promise<EvalFn> {
+async function loadCustomEval(cfg: CustomEvalConfig, baseDir: string): Promise<EvalFn> {
   const absPath = path.isAbsolute(cfg.file) ? cfg.file : path.resolve(baseDir, cfg.file);
   const cached = moduleCache.get(absPath);
   if (cached) return cached;

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DatasetRow } from '../types.js';
-import { runContains } from './contains.js';
+import type { DatasetRow } from '../types';
+import { runContains } from './contains';
 
 const row: DatasetRow = {
   id: 'r',

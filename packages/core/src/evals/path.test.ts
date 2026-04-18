@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DatasetRow } from '../types.js';
-import { getPath, resolveActual, resolveExpected } from './path.js';
+import type { DatasetRow } from '../types';
+import { getPath, resolveActual, resolveExpected } from './path';
 
 describe('getPath', () => {
   test('returns the whole object when path is empty/undefined', () => {

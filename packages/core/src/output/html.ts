@@ -1,14 +1,23 @@
 import fs from 'node:fs/promises';
-import type { RowResult, RunManifest } from '../types.js';
-import { loadUiBundle } from './ui-bundle.js';
+import type { RowResult, RunManifest } from '../types';
+import { loadUiBundle } from './ui-bundle';
 
+/** Payload embedded in the self-contained HTML report. */
 export interface ReportData {
   mode: 'run' | 'compare';
   manifest: RunManifest | null;
+  /** Present in run-mode reports only. */
   results?: RowResult[];
+  /** Present in compare-mode reports only; matches the `CompareData` shape. */
   compare?: unknown;
 }
 
+/**
+ * Builds a single self-contained HTML string — the Vite-built review UI with
+ * its JS and CSS inlined, plus the run data on `window.__PETR_DATA__` so the
+ * UI can render without a server. When the UI bundle hasn't been built, falls
+ * back to a no-dep static table so the report is at least readable.
+ */
 export function renderReportHtml(data: ReportData): string {
   const bundle = loadUiBundle();
   if (!bundle) {
@@ -32,6 +41,7 @@ export function renderReportHtml(data: ReportData): string {
   return html;
 }
 
+/** Renders {@link renderReportHtml} and writes it to disk. */
 export async function writeHtmlReport(filePath: string, data: ReportData): Promise<void> {
   await fs.writeFile(filePath, renderReportHtml(data), 'utf8');
 }

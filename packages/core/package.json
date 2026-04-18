@@ -16,8 +16,8 @@
     "ui-dist/"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "rm -rf dist && bun build ./src/index.ts --target=node --outdir=dist --format=esm --sourcemap=linked --packages=external && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
     "clean": "rm -rf dist"
   },
   "dependencies": {

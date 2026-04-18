@@ -1,17 +1,20 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { RowResult, RunManifest, SuiteConfig } from '../types.js';
-import { rowResultsToCsv, writeCsv } from './csv.js';
-import { writeHtmlReport } from './html.js';
-import { writeManifest, writeRunJson } from './json.js';
+import type { RowResult, RunManifest, SuiteConfig } from '../types';
+import { rowResultsToCsv, writeCsv } from './csv';
+import { writeHtmlReport } from './html';
+import { writeManifest, writeRunJson } from './json';
 
+/** Arguments to {@link writeRunArtifacts}. */
 export interface WriteRunOptions {
   config: SuiteConfig;
   manifest: RunManifest;
   results: RowResult[];
+  /** Parent directory — a `<runId>/` subfolder is created inside. */
   outDir: string;
 }
 
+/** Absolute paths of each artifact that was written. */
 export interface WriteRunResult {
   runDir: string;
   csvPath: string;
@@ -20,6 +23,10 @@ export interface WriteRunResult {
   htmlPath: string;
 }
 
+/**
+ * Writes a complete run folder: `results.csv`, `results.json`, `manifest.json`,
+ * and a self-contained `report.html`. The folder is named after `manifest.runId`.
+ */
 export async function writeRunArtifacts(opts: WriteRunOptions): Promise<WriteRunResult> {
   const runDir = path.join(opts.outDir, opts.manifest.runId);
   await fs.mkdir(runDir, { recursive: true });

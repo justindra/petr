@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { RowResult, SuiteConfig } from '../types.js';
-import { rowResultsToCsv } from './csv.js';
+import type { RowResult, SuiteConfig } from '../types';
+import { rowResultsToCsv } from './csv';
 
 const config: SuiteConfig = {
   name: 't',

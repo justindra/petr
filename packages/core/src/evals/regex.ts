@@ -1,5 +1,5 @@
-import type { DatasetRow, EvalResult, RegexEvalConfig } from '../types.js';
-import { resolveActual } from './path.js';
+import type { DatasetRow, EvalResult, RegexEvalConfig } from '../types';
+import { resolveActual } from './path';
 
 export function runRegex(cfg: RegexEvalConfig, actual: unknown, _row: DatasetRow): EvalResult {
   const target = toStr(resolveActual(cfg, actual));

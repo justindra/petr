@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { generateRunId, hashConfig, tryGitSha } from './manifest.js';
-import type { SuiteConfig } from './types.js';
+import { generateRunId, hashConfig, tryGitSha } from './manifest';
+import type { SuiteConfig } from './types';
 
 const cfg: SuiteConfig = {
   name: 'demo',

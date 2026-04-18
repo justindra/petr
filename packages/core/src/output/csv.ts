@@ -1,6 +1,12 @@
 import fs from 'node:fs/promises';
-import type { EvalResult, RowResult, SuiteConfig } from '../types.js';
+import type { EvalResult, RowResult, SuiteConfig } from '../types';
+import { encodeRow, stringifyJson } from './csv-utils';
 
+/**
+ * Renders run results as a CSV string. Each eval in the suite becomes three
+ * columns (`eval.<name>.pass`, `.score`, `.detail`) so spreadsheet tools can
+ * filter failures without parsing JSON.
+ */
 export function rowResultsToCsv(config: SuiteConfig, results: RowResult[]): string {
   const evalNames = [...new Set(config.evals.map((e) => e.name))];
   const headers = [
@@ -41,25 +47,7 @@ export function rowResultsToCsv(config: SuiteConfig, results: RowResult[]): stri
   return lines.join('\n') + '\n';
 }
 
+/** Writes a prebuilt CSV string to disk (utf-8). */
 export async function writeCsv(filePath: string, csv: string): Promise<void> {
   await fs.writeFile(filePath, csv, 'utf8');
-}
-
-function encodeRow(cells: string[]): string {
-  return cells.map(escapeCell).join(',');
-}
-
-function escapeCell(v: string): string {
-  if (/[",\n\r]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
-  return v;
-}
-
-function stringifyJson(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
 }

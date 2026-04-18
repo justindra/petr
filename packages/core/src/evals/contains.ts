@@ -1,5 +1,5 @@
-import type { ContainsEvalConfig, DatasetRow, EvalResult } from '../types.js';
-import { resolveActual, resolveExpected } from './path.js';
+import type { ContainsEvalConfig, DatasetRow, EvalResult } from '../types';
+import { resolveActual, resolveExpected } from './path';
 
 export function runContains(cfg: ContainsEvalConfig, actual: unknown, row: DatasetRow): EvalResult {
   const haystack = toStr(resolveActual(cfg, actual));

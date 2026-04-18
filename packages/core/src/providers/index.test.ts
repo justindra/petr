@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { providerLabel, resolveModel } from './index.js';
+import { resolveModel } from './index';
 
 describe('resolveModel', () => {
   test('returns a model instance for each supported provider', () => {
@@ -8,11 +8,5 @@ describe('resolveModel', () => {
       expect(model).toBeDefined();
       expect(typeof model).toMatch(/^(object|string)$/);
     }
-  });
-});
-
-describe('providerLabel', () => {
-  test('joins provider and id', () => {
-    expect(providerLabel({ provider: 'anthropic', id: 'claude-x' })).toBe('anthropic:claude-x');
   });
 });

@@ -12,8 +12,8 @@
     "oclif.manifest.json"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && oclif manifest",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "rm -rf dist && bun build ./src/index.ts ./src/commands/run.ts ./src/commands/compare.ts ./src/commands/review.ts ./src/commands/init.ts ./src/commands/list.ts --target=node --outdir=dist --format=esm --sourcemap=linked --packages=external --root=./src && tsc -p tsconfig.build.json && oclif manifest",
+    "typecheck": "tsc -p tsconfig.json",
     "dev": "./bin/dev.js",
     "clean": "rm -rf dist oclif.manifest.json"
   },

@@ -1,5 +1,5 @@
-import type { DatasetRow, EqualsEvalConfig, EvalResult } from '../types.js';
-import { resolveActual, resolveExpected } from './path.js';
+import type { DatasetRow, EqualsEvalConfig, EvalResult } from '../types';
+import { resolveActual, resolveExpected } from './path';
 
 export function runEquals(cfg: EqualsEvalConfig, actual: unknown, row: DatasetRow): EvalResult {
   const a = resolveActual(cfg, actual);

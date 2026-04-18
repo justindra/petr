@@ -31,21 +31,33 @@ cp .env.example .env   # then paste your ANTHROPIC_API_KEY into .env
 
 `petr` uses the [Vercel AI SDK](https://ai-sdk.dev) under the hood, so any of these work out of the box:
 
-| `model.provider` in config | Env var(s) |
-| --- | --- |
-| `anthropic` | `ANTHROPIC_API_KEY` |
-| `openai` | `OPENAI_API_KEY` |
-| `google` | `GOOGLE_GENERATIVE_AI_API_KEY` |
-| `bedrock` | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
-| `copilot` | `GITHUB_COPILOT_TOKEN` (Copilot OAuth token, **not** a PAT) |
+| `model.provider` in config | Env var(s)                                                  |
+| -------------------------- | ----------------------------------------------------------- |
+| `anthropic`                | `ANTHROPIC_API_KEY`                                         |
+| `openai`                   | `OPENAI_API_KEY`                                            |
+| `google`                   | `GOOGLE_GENERATIVE_AI_API_KEY`                              |
+| `bedrock`                  | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`  |
+| `copilot`                  | `GITHUB_COPILOT_TOKEN` (Copilot OAuth token, **not** a PAT) |
 
 The `copilot` provider talks to `api.githubcopilot.com`, the same OpenAI-compatible endpoint VS Code Copilot Chat uses. Model IDs follow Copilot's naming (`claude-sonnet-4.6`, `gpt-5`, etc. — see [supported models](https://docs.github.com/en/copilot/reference/ai-models/supported-models)). Note this route is not officially documented for third-party use; GitHub could change it at any time.
 
 ## Development
 
 ```bash
-bun run typecheck   # type-check all workspaces
-bun run lint        # ESLint + typescript-eslint
-bun run format:check
-bun test            # unit + integration + e2e
+bun run build              # bun build for JS + tsc --emitDeclarationOnly for .d.ts
+bun run typecheck          # tsc --noEmit across every workspace (includes test files)
+bun run lint               # ESLint + typescript-eslint
+bun run format:check       # Prettier
 ```
+
+### Tests
+
+```bash
+bun test                   # everything in one pass (default)
+bun run test:unit          # co-located *.test.ts files under packages/*/src
+bun run test:integration   # packages/core/test/integration
+bun run test:e2e           # packages/cli/test/e2e (spawns the real bin)
+bun run test:watch         # watch mode across the whole repo
+```
+
+Unit tests live next to their source (`foo.ts` + `foo.test.ts`). Integration and e2e tests live in `packages/*/test/`. `bun test` is a Jest-compatible runner, so `describe` / `test` / `expect` all work.

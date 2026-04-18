@@ -1,5 +1,5 @@
-import type { BooleanEvalConfig, DatasetRow, EvalResult } from '../types.js';
-import { resolveActual, resolveExpected } from './path.js';
+import type { BooleanEvalConfig, DatasetRow, EvalResult } from '../types';
+import { resolveActual, resolveExpected } from './path';
 
 export function runBoolean(cfg: BooleanEvalConfig, actual: unknown, row: DatasetRow): EvalResult {
   const a = coerceBool(resolveActual(cfg, actual));

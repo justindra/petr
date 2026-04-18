@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import type { DatasetRow } from '../types.js';
-import { runRegex } from './regex.js';
+import type { DatasetRow } from '../types';
+import { runRegex } from './regex';
 
 const row: DatasetRow = { id: 'r', input: {} };
 
