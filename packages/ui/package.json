@@ -1,6 +1,6 @@
 {
   "name": "@petr/ui",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "petr review UI (Vite + React + Tailwind v4 + Catalyst)",
   "type": "module",
   "private": true,

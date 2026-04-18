@@ -1,6 +1,6 @@
 {
   "name": "@petr/core",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Programmatic core for petr — runner, evals, providers, output",
   "type": "module",
   "main": "./dist/index.js",
