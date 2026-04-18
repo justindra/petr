@@ -1,0 +1,33 @@
+{
+  "name": "@petr/cli",
+  "version": "0.0.0",
+  "description": "petr CLI",
+  "type": "module",
+  "bin": {
+    "petr": "./bin/run.js"
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && oclif manifest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "./bin/dev.js",
+    "clean": "rm -rf dist oclif.manifest.json"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.0.0",
+    "@petr/core": "workspace:*"
+  },
+  "devDependencies": {
+    "oclif": "^4.0.0"
+  },
+  "oclif": {
+    "bin": "petr",
+    "dirname": "petr",
+    "commands": "./dist/commands",
+    "topicSeparator": " "
+  }
+}
