@@ -1,0 +1,3 @@
+{"id":"r1","input":{"message":"thanks, that worked!"},"expected":{"label":"positive"}}
+{"id":"r2","input":{"message":"it crashed again, useless."},"expected":{"label":"negative"}}
+{"id":"r3","input":{"message":"meeting tomorrow at 3?"},"expected":{"label":"neutral"}}
