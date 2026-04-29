@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { importUserModule } from '../import-user-module';
 import type {
   CustomEvalConfig,
   DatasetRow,
@@ -16,8 +16,7 @@ async function loadCustomEval(cfg: CustomEvalConfig, baseDir: string): Promise<E
   const absPath = path.isAbsolute(cfg.file) ? cfg.file : path.resolve(baseDir, cfg.file);
   const cached = moduleCache.get(absPath);
   if (cached) return cached;
-  const url = pathToFileURL(absPath).href;
-  const mod = (await import(url)) as { default?: EvalFn };
+  const mod = await importUserModule<{ default?: EvalFn }>(absPath);
   if (typeof mod.default !== 'function') {
     throw new Error(`Custom eval at ${cfg.file} must have a default export (async function)`);
   }

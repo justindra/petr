@@ -39,7 +39,7 @@ async function writeFixture(variants: string): Promise<string> {
     path.join(dir, 'prompt.ts'),
     `export default async (input) => ({ y: input.x + 1 });`,
   );
-  const corePath = path.resolve(import.meta.dir, '../../../core/src/config.ts').replace(/\\/g, '/');
+  const corePath = path.resolve(import.meta.dir, '../../../core/dist/index.js').replace(/\\/g, '/');
   await fs.writeFile(
     path.join(dir, 'petr.config.ts'),
     `import { defineConfig } from '${corePath}';

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { importUserModule } from './import-user-module';
 import type { ResolvedSuiteConfig, SuiteConfig } from './types';
 
 /**
@@ -42,8 +42,7 @@ export async function loadConfig(configPath: string): Promise<{
   baseDir: string;
 }> {
   const absPath = path.resolve(configPath);
-  const url = pathToFileURL(absPath).href;
-  const mod = (await import(url)) as { default?: SuiteConfig; config?: SuiteConfig };
+  const mod = await importUserModule<{ default?: SuiteConfig; config?: SuiteConfig }>(absPath);
   const config = mod.default ?? mod.config;
   if (!config) {
     throw new Error(

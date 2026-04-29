@@ -1,9 +1,9 @@
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { resolveRelativeToConfig } from './config';
 import { buildLLMContext, type LLMSession } from './context';
 import { readDataset } from './dataset';
 import { runEvals } from './evals';
+import { importUserModule } from './import-user-module';
 import { consoleLogger } from './logger';
 import { generateRunId, hashConfig, tryGitSha } from './manifest';
 import { estimateCostUsd } from './providers/pricing';
@@ -257,8 +257,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function defaultLoadPrompt(promptPath: string): Promise<PromptFn> {
-  const url = pathToFileURL(promptPath).href;
-  const mod = (await import(url)) as { default?: PromptFn };
+  const mod = await importUserModule<{ default?: PromptFn }>(promptPath);
   if (typeof mod.default !== 'function') {
     throw new Error(`Prompt file at ${promptPath} must have a default export`);
   }
