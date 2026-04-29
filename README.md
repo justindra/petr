@@ -20,6 +20,7 @@ cp .env.example .env   # fill in the creds for whichever providers you want
 
 petr run petr.config.ts                         # runs every variant + prints a compare summary
 petr run petr.config.ts --variant copilot       # run a single variant
+petr run petr.config.ts --dataset ./small.jsonl  # run against a different dataset from your cwd
 petr review runs/<suite-run>/<variant>          # open the UI on one variant's results
 petr compare runs/<suite-run>                   # re-emit the compare report for a past run
 ```
@@ -38,7 +39,7 @@ runs/
       results.csv  summary.csv  results.json  report.html
 ```
 
-`petr run` auto-loads `.env` (and `.env.local`) from the config's directory, so credentials stay out of your shell history and out of git. Variants share `dataset` and `evals` at the suite level — this is what makes a comparison sound: they literally can't drift.
+`petr run` auto-loads `.env` (and `.env.local`) from the config's directory, so credentials stay out of your shell history and out of git. Variants share `dataset` and `evals` at the suite level — this is what makes a comparison sound: they literally can't drift. Use `--dataset` to override the dataset for one run; relative override paths are resolved from the directory where you run the command.
 
 ## Monorepo layout
 

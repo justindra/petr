@@ -30,6 +30,10 @@ async function writeFixture(variants: string): Promise<string> {
       JSON.stringify({ id: 'b', input: { x: 3 }, expected: { y: 4 } }),
     ].join('\n') + '\n',
   );
+  await fs.writeFile(
+    path.join(dir, 'alternate.jsonl'),
+    JSON.stringify({ id: 'c', input: { x: 10 }, expected: { y: 11 } }) + '\n',
+  );
   // Prompt ignores ctx.llm and computes output directly so no API key is needed.
   await fs.writeFile(
     path.join(dir, 'prompt.ts'),
@@ -148,5 +152,28 @@ describe('petr run e2e', () => {
     expect(suiteContents).toContain('alpha');
     expect(suiteContents).not.toContain('beta');
     expect(suiteContents).not.toContain('compare');
+  }, 30_000);
+
+  test('--dataset overrides the config dataset relative to the command cwd', async () => {
+    const dir = await writeFixture(
+      `[{ name: 'main', model: { provider: 'anthropic', id: 'claude-haiku-4-5' } }]`,
+    );
+    const { code, stdout, stderr } = await runCli(
+      ['run', 'petr.config.ts', '--dataset', 'alternate.jsonl', '--out', './runs'],
+      dir,
+    );
+    expect(stderr).toBe('');
+    expect(code).toBe(0);
+    expect(stdout).toContain('1/1 passed');
+
+    const suiteRuns = await fs.readdir(path.join(dir, 'runs'));
+    expect(suiteRuns).toHaveLength(1);
+    const manifestPath = path.join(dir, 'runs', suiteRuns[0]!, 'main', 'manifest.json');
+    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8')) as {
+      datasetPath: string;
+      rowCount: number;
+    };
+    expect(manifest.datasetPath).toBe('alternate.jsonl');
+    expect(manifest.rowCount).toBe(1);
   }, 30_000);
 });

@@ -46,6 +46,10 @@ export default class Run extends Command {
       char: 'l',
       description: 'Only run the first N rows',
     }),
+    dataset: Flags.string({
+      char: 'd',
+      description: 'Dataset path for this run, relative to the current working directory',
+    }),
     out: Flags.string({
       char: 'o',
       description: 'Parent directory for run folders (default: ./runs)',
@@ -72,10 +76,14 @@ export default class Run extends Command {
 
     for (const variantName of targets) {
       const resolved = resolveVariant(config, variantName);
+      const runConfig =
+        flags.dataset !== undefined
+          ? { ...resolved, dataset: path.resolve(flags.dataset) }
+          : resolved;
       this.log(`  · ${variantName} — ${resolved.model.provider}:${resolved.model.id}`);
 
       const result = await runSuite({
-        config: resolved,
+        config: runConfig,
         baseDir,
         ...(flags.concurrency !== undefined ? { concurrency: flags.concurrency } : {}),
         ...(flags['max-retries'] !== undefined ? { maxRetries: flags['max-retries'] } : {}),
@@ -84,7 +92,7 @@ export default class Run extends Command {
 
       const variantDir = path.join(suiteRunDir, variantName);
       await writeVariantArtifacts({
-        config: resolved,
+        config: runConfig,
         manifest: result.manifest,
         results: result.results,
         variantDir,
