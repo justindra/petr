@@ -10,6 +10,8 @@ Install the CLI from npm:
 npm install -g petr
 ```
 
+The npm-installed CLI requires Node.js 24 or newer.
+
 The included `examples/demo` is a sentiment-classification suite you can run against a real LLM in under a minute. The single `petr.config.ts` declares two variants — Copilot and Bedrock — over the same dataset, prompt, and evals, so `petr run` executes both and auto-compares.
 
 ```bash
