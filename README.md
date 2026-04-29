@@ -4,6 +4,12 @@ Prompt Evaluation & Testing Runner — a CLI for running LLM prompts against dat
 
 ## Try the demo
 
+Install the CLI from npm:
+
+```bash
+npm install -g petr
+```
+
 The included `examples/demo` is a sentiment-classification suite you can run against a real LLM in under a minute. The single `petr.config.ts` declares two variants — Copilot and Bedrock — over the same dataset, prompt, and evals, so `petr run` executes both and auto-compares.
 
 ```bash
@@ -44,7 +50,7 @@ runs/
 ## Monorepo layout
 
 - `packages/core` — `@petr/core`, programmatic API (config loader, dataset reader, evals, providers, runner, output writers, review server)
-- `packages/cli` — `@petr/cli`, the `petr` binary (oclif)
+- `packages/cli` — `petr`, the published CLI package and binary (oclif)
 - `packages/ui` — `@petr/ui`, the review UI (Vite + React 19 + Tailwind v4 + Catalyst)
 - `examples/demo` — a working end-to-end example
 

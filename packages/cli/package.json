@@ -1,8 +1,18 @@
 {
-  "name": "@petr/cli",
+  "name": "petr",
   "version": "1.0.0",
   "description": "petr CLI",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justindra/petr.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/justindra/petr#readme",
+  "bugs": {
+    "url": "https://github.com/justindra/petr/issues"
+  },
   "bin": {
     "petr": "./bin/run.js"
   },
@@ -11,6 +21,9 @@
     "dist/",
     "oclif.manifest.json"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rm -rf dist && bun build ./src/index.ts ./src/commands/run.ts ./src/commands/compare.ts ./src/commands/review.ts ./src/commands/init.ts ./src/commands/list.ts --target=node --outdir=dist --format=esm --sourcemap=linked --packages=external --root=./src && tsc -p tsconfig.build.json && oclif manifest",
     "prepack": "cd ../.. && bun run build",
@@ -20,7 +33,7 @@
   },
   "dependencies": {
     "@oclif/core": "^4.0.0",
-    "@petr/core": "workspace:*"
+    "@petr/core": "1.0.0"
   },
   "devDependencies": {
     "oclif": "^4.0.0"
@@ -30,5 +43,19 @@
     "dirname": "petr",
     "commands": "./dist/commands",
     "topicSeparator": " "
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "prompt",
+    "prompts",
+    "prompt engineering",
+    "evals",
+    "evaluation",
+    "testing",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=20"
   }
 }

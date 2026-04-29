@@ -2,9 +2,19 @@
   "name": "@petr/core",
   "version": "1.0.0",
   "description": "Programmatic core for petr — runner, evals, providers, output",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justindra/petr.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/justindra/petr#readme",
+  "bugs": {
+    "url": "https://github.com/justindra/petr/issues"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,6 +25,9 @@
     "dist/",
     "ui-dist/"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "rm -rf dist && bun build ./src/index.ts --target=node --outdir=dist --format=esm --sourcemap=linked --packages=external && tsc -p tsconfig.build.json",
     "bundle:ui": "rm -rf ui-dist && cp -r ../ui/dist ui-dist",
@@ -29,5 +42,18 @@
     "@ai-sdk/openai": "^3.0.0",
     "@aws-sdk/credential-providers": "^3.1032.0",
     "ai": "^6.0.0"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "prompt",
+    "prompts",
+    "prompt engineering",
+    "evals",
+    "evaluation",
+    "testing"
+  ],
+  "engines": {
+    "node": ">=20"
   }
 }
