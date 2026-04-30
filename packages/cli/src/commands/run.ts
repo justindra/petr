@@ -16,7 +16,7 @@ import {
   type RunManifest,
   type SuiteConfig,
   type SuiteRunManifest,
-} from '@petr/core';
+} from '@petr-ai/core';
 import path from 'node:path';
 
 export default class Run extends Command {

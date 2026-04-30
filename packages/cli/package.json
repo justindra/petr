@@ -1,6 +1,6 @@
 {
-  "name": "petr",
-  "version": "1.0.0",
+  "name": "@petr-ai/cli",
+  "version": "1.0.1",
   "description": "petr CLI",
   "license": "MIT",
   "type": "module",
@@ -26,14 +26,15 @@
   },
   "scripts": {
     "build": "rm -rf dist && bun build ./src/index.ts ./src/commands/run.ts ./src/commands/compare.ts ./src/commands/review.ts ./src/commands/init.ts ./src/commands/list.ts --target=node --outdir=dist --format=esm --sourcemap=linked --packages=external --root=./src && tsc -p tsconfig.build.json && oclif manifest",
-    "prepack": "cd ../.. && bun run build",
+    "prepack": "cd ../.. && bun run build && cp README.md packages/cli/README.md",
+    "postpack": "cd ../.. && rm -f packages/cli/README.md",
     "typecheck": "tsc -p tsconfig.typecheck.json",
     "dev": "./bin/dev.js",
     "clean": "rm -rf dist oclif.manifest.json"
   },
   "dependencies": {
     "@oclif/core": "^4.0.0",
-    "@petr/core": "1.0.0"
+    "@petr-ai/core": "1.0.1"
   },
   "devDependencies": {
     "oclif": "^4.0.0"

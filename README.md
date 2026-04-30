@@ -7,7 +7,7 @@ Prompt Evaluation & Testing Runner — a CLI for running LLM prompts against dat
 Install the CLI from npm:
 
 ```bash
-npm install -g petr
+npm install -g @petr-ai/cli
 ```
 
 The npm-installed CLI requires Node.js 24 or newer.
@@ -51,9 +51,9 @@ runs/
 
 ## Monorepo layout
 
-- `packages/core` — `@petr/core`, programmatic API (config loader, dataset reader, evals, providers, runner, output writers, review server)
-- `packages/cli` — `petr`, the published CLI package and binary (oclif)
-- `packages/ui` — `@petr/ui`, the review UI (Vite + React 19 + Tailwind v4 + Catalyst)
+- `packages/core` — `@petr-ai/core`, programmatic API (config loader, dataset reader, evals, providers, runner, output writers, review server)
+- `packages/cli` — `@petr-ai/cli`, the published CLI package and `petr` binary (oclif)
+- `packages/ui` — `@petr-ai/ui`, the review UI (Vite + React 19 + Tailwind v4 + Catalyst)
 - `examples/demo` — a working end-to-end example
 
 ## Provider configuration

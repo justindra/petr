@@ -2,7 +2,7 @@ import { Args, Command, Flags } from '@oclif/core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const CONFIG_TEMPLATE = `import { defineConfig } from '@petr/core';
+const CONFIG_TEMPLATE = `import { defineConfig } from '@petr-ai/core';
 
 export default defineConfig({
   name: 'demo',
@@ -33,7 +33,7 @@ const DATASET_TEMPLATE = `{"id":"r1","input":{"message":"thanks, that worked!"},
 {"id":"r3","input":{"message":"meeting tomorrow at 3?"},"expected":{"label":"neutral"}}
 `;
 
-const PROMPT_TEMPLATE = `import type { PromptFn } from '@petr/core';
+const PROMPT_TEMPLATE = `import type { PromptFn } from '@petr-ai/core';
 
 interface Input { message: string }
 interface Output { label: 'positive' | 'negative' | 'neutral' }

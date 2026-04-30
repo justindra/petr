@@ -1,6 +1,6 @@
 {
-  "name": "@petr/core",
-  "version": "1.0.0",
+  "name": "@petr-ai/core",
+  "version": "1.0.1",
   "description": "Programmatic core for petr — runner, evals, providers, output",
   "license": "MIT",
   "type": "module",

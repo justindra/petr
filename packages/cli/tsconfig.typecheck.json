@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": "..",
     "paths": {
-      "@petr/core": ["../core/src/index.ts"]
+      "@petr-ai/core": ["../core/src/index.ts"]
     }
   }
 }

@@ -8,7 +8,7 @@ import type { ResolvedSuiteConfig, SuiteConfig } from './types';
  *
  * @example
  * ```ts
- * import { defineConfig } from '@petr/core';
+ * import { defineConfig } from '@petr-ai/core';
  *
  * export default defineConfig({
  *   name: 'classification',

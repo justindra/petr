@@ -1,4 +1,4 @@
-import type { PromptFn } from '@petr/core';
+import type { PromptFn } from '@petr-ai/core';
 
 interface Input {
   message: string;

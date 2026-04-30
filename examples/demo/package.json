@@ -1,9 +1,9 @@
 {
-  "name": "@petr-examples/demo",
-  "version": "0.0.0",
+  "name": "@petr-ai/demo",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@petr/core": "workspace:*"
+    "@petr-ai/core": "workspace:*"
   }
 }

@@ -2,4 +2,4 @@
 
 Use `bun run changeset` when a pull request changes published package behavior.
 
-`petr` and `@petr/core` are configured as a fixed release group, so they always publish with the same version.
+All workspace packages are configured as a fixed release group, so the monorepo always uses one version number.

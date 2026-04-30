@@ -8,7 +8,7 @@ import {
   type RowResult,
   type RunManifest,
   type SuiteRunManifest,
-} from '@petr/core';
+} from '@petr-ai/core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 

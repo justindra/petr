@@ -1,4 +1,4 @@
-import { defineConfig } from '@petr/core';
+import { defineConfig } from '@petr-ai/core';
 
 export default defineConfig({
   name: 'demo',

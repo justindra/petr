@@ -12,6 +12,7 @@ packages/ui/dist/
 packages/core/ui-dist/
 *.tsbuildinfo
 packages/cli/oclif.manifest.json
+packages/cli/README.md
 
 # Run artifacts
 runs/

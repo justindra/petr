@@ -12,7 +12,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    // Inline everything into one HTML + assets so @petr/core can bundle the result.
+    // Inline everything into one HTML + assets so @petr-ai/core can bundle the result.
     assetsInlineLimit: 0,
     rollupOptions: {
       output: {

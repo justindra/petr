@@ -1,5 +1,5 @@
 import { Command, Flags } from '@oclif/core';
-import type { SuiteRunManifest } from '@petr/core';
+import type { SuiteRunManifest } from '@petr-ai/core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 

@@ -1,5 +1,5 @@
 import { Args, Command, Flags } from '@oclif/core';
-import { startReviewServer } from '@petr/core';
+import { startReviewServer } from '@petr-ai/core';
 import path from 'node:path';
 
 export default class Review extends Command {

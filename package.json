@@ -1,7 +1,7 @@
 {
   "name": "petr-monorepo",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "petr — Prompt Evaluation & Testing Runner",
   "license": "MIT",
   "type": "module",
@@ -10,9 +10,9 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "bun run --filter '@petr/core' --filter '@petr/ui' build && bun run --filter '@petr/core' bundle:ui && bun run --filter petr build",
+    "build": "bun run --filter '@petr-ai/core' --filter '@petr-ai/ui' build && bun run --filter '@petr-ai/core' bundle:ui && bun run --filter '@petr-ai/cli' build",
     "changeset": "changeset",
-    "version": "changeset version",
+    "version": "changeset version && bun scripts/sync-root-version.mjs",
     "release": "bun run build && changeset publish",
     "typecheck": "bun run --filter '*' typecheck",
     "lint": "eslint .",
@@ -23,8 +23,8 @@
     "test:integration": "bun test packages/core/test/integration",
     "test:e2e": "bun test packages/cli/test/e2e",
     "test:watch": "bun test --watch",
-    "dev:ui": "bun run --filter '@petr/ui' dev",
-    "dev:cli": "bun run --filter petr dev",
+    "dev:ui": "bun run --filter '@petr-ai/ui' dev",
+    "dev:cli": "bun run --filter '@petr-ai/cli' dev",
     "clean": "rm -rf packages/*/dist packages/ui/dist packages/core/ui-dist node_modules/.cache"
   },
   "devDependencies": {
@@ -46,5 +46,19 @@
   "engines": {
     "bun": ">=1.3.0",
     "node": ">=24"
-  }
+  },
+  "main": "eslint.config.js",
+  "directories": {
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justindra/petr.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/justindra/petr/issues"
+  },
+  "homepage": "https://github.com/justindra/petr#readme"
 }
