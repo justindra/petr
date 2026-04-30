@@ -6,7 +6,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/justindra/petr.git",
+    "url": "https://github.com/justindra/petr",
     "directory": "packages/cli"
   },
   "homepage": "https://github.com/justindra/petr#readme",
